@@ -1,0 +1,24 @@
+node_modules
+dist
+out
+.DS_Store
+.eslintcache
+*.log*
+.idea
+.kiro
+/download/
+
+temp
+temp/log.txt
+/.kiro/
+/.vscode/
+/.codebuddy/
+/.idea/
+docs/.vitepress/dist
+docs/.vitepress/cache
+
+# 大文件（字体、视频）
+*.ttf
+*.woff
+*.woff2
+*.mp4
