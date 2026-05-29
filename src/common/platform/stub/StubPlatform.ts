@@ -8,7 +8,6 @@
 import type { PlatformService } from '../types'
 
 const noop = () => {}
-const noopAsync = async () => ({})
 const noopUnsubscribe = () => () => {}
 
 function unsupported(feature: string): never {
@@ -28,8 +27,14 @@ export class StubPlatform implements PlatformService {
 
   // === 音乐 SDK ===
   music = {
-    requestSdk: async (method: string, args: any) => unsupported('音乐 SDK'),
-    invoke: async (channel: string, ...args: any[]) => unsupported('IPC 调用')
+    requestSdk: async (_method: string, _args: any) => unsupported('音乐 SDK'),
+    invoke: async (_channel: string, ..._args: any[]) => unsupported('IPC 调用'),
+    on: (_channel: string, _callback: (...args: any[]) => void) => {
+      return () => {} // 返回 noop 取消订阅函数
+    },
+    removeAllListeners: (_channel: string) => {
+      // noop
+    }
   }
 
   // === 音乐缓存 ===
@@ -176,8 +181,29 @@ export class StubPlatform implements PlatformService {
     onScanProgress: noop,
     onScanFinished: noop,
     removeScanProgress: noop,
-    removeScanFinished: noop
+    removeScanFinished: noop,
+    getUrlById: async () => unsupported('本地音乐 URL'),
+    getDirs: async () => [],
+    setDirs: async () => {},
+    getList: async () => [],
+    batchMatch: async () => unsupported('批量匹配'),
+    getCoverBase64: async () => '',
+    onBatchMatchProgress: noop,
+    onBatchMatchFinished: noop,
+    removeBatchMatchListeners: noop,
+    clearIndex: async () => {}
   }
+
+  // === 文件操作 ===
+  file = {
+    readFile: async () => unsupported('文件读取')
+  }
+
+  // === Windows 任务栏缩略图工具栏 ===
+  thumbar = undefined
+
+  // === 窗口标题/进度条 ===
+  app = undefined
 
   // === 分享 ===
   share = {

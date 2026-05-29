@@ -24,7 +24,14 @@ export class ElectronPlatform implements PlatformService {
   // === 音乐 SDK ===
   music = {
     requestSdk: <T extends string>(method: T, args: any) => this.api.music.requestSdk(method, args),
-    invoke: (channel: string, ...args: any[]) => this.api.music.invoke(channel, ...args)
+    invoke: (channel: string, ...args: any[]) => this.api.music.invoke(channel, ...args),
+    on: (channel: string, callback: (...args: any[]) => void) => {
+      (window as any).electron.ipcRenderer.on(channel, callback)
+      return () => (window as any).electron.ipcRenderer.removeListener(channel, callback)
+    },
+    removeAllListeners: (channel: string) => {
+      (window as any).electron.ipcRenderer.removeAllListeners(channel)
+    }
   }
 
   // === 音乐缓存 ===
@@ -182,8 +189,29 @@ export class ElectronPlatform implements PlatformService {
     onScanProgress: (cb: (processed: number, total: number) => void) => this.api.localMusic.onScanProgress(cb),
     onScanFinished: (cb: (resList: any[]) => void) => this.api.localMusic.onScanFinished(cb),
     removeScanProgress: () => this.api.localMusic.removeScanProgress(),
-    removeScanFinished: () => this.api.localMusic.removeScanFinished()
+    removeScanFinished: () => this.api.localMusic.removeScanFinished(),
+    getUrlById: (id: string) => this.api.localMusic.getUrlById(id),
+    getDirs: () => this.api.localMusic.getDirs(),
+    setDirs: (dirs: string[]) => this.api.localMusic.setDirs(dirs),
+    getList: () => this.api.localMusic.getList(),
+    batchMatch: (ids: string[]) => this.api.localMusic.batchMatch(ids),
+    getCoverBase64: (songmid: string) => this.api.localMusic.getCoverBase64(songmid),
+    onBatchMatchProgress: (cb: (processed: number, total: number) => void) => this.api.localMusic.onBatchMatchProgress(cb),
+    onBatchMatchFinished: (cb: (res: any) => void) => this.api.localMusic.onBatchMatchFinished(cb),
+    removeBatchMatchListeners: () => this.api.localMusic.removeBatchMatchListeners(),
+    clearIndex: () => this.api.localMusic.clearIndex()
   }
+
+  // === 文件操作 ===
+  file = {
+    readFile: (path: string) => this.api.file.readFile(path)
+  }
+
+  // === Windows 任务栏缩略图工具栏 ===
+  get thumbar() { return this.api.thumbar }
+
+  // === 窗口标题/进度条 ===
+  get app() { return this.api.app }
 
   // === 分享 ===
   share = {

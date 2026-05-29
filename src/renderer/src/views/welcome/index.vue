@@ -66,6 +66,7 @@ import { initPlayback } from '@renderer/utils/audio/globaPlayList'
 import { useAutoUpdate } from '@renderer/composables/useAutoUpdate'
 import { useSettingsStore } from '@renderer/store/Settings'
 import { storeToRefs } from 'pinia'
+import { getPlatformService } from '@common/platform'
 
 const settingsStore = useSettingsStore()
 const { settings } = storeToRefs(settingsStore)
@@ -91,7 +92,7 @@ const features = showNewYear.value
 onMounted(async () => {
   // 获取版本号
   try {
-    const appVersion = await window.electron.ipcRenderer.invoke('get-app-version')
+    const appVersion = await getPlatformService().music.invoke('get-app-version')
     if (appVersion) version.value = appVersion
   } catch (error) {
     console.warn('Failed to get app version:', error)
@@ -113,7 +114,7 @@ onMounted(async () => {
   setTimeout(() => (loadingText.value = '加载插件系统...'), 500)
 
   try {
-    await window.electron.ipcRenderer.invoke('service-plugin-initialize-system')
+    await getPlatformService().music.invoke('service-plugin-initialize-system')
   } catch (e) {
     console.error('Plugin init failed', e)
     loadingText.value = '初始化遇到问题'

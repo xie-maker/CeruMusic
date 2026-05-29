@@ -13,6 +13,7 @@ import {
 } from '@renderer/utils/playlist/playlistManager'
 import { waitForAudioReady, getCandidateSongs } from './audioHelpers'
 import { crossfadeManager } from './crossfade'
+import { getPlatformService } from '@common/platform'
 
 const controlAudio = ControlAudioStore()
 const localUserStore = LocalUserDetailStore()
@@ -971,7 +972,7 @@ const initPlayback = async () => {
   initPlaylistEventListeners(localUserStore, playSong)
 
   // 注册插件限流监听（绑定到生命周期，避免重复注册）
-  _unsubscribeThrottle = window.api.pluginNotice.onPluginThrottle(
+  _unsubscribeThrottle = getPlatformService().pluginNotice.onPluginThrottle(
     ({ pluginId, reason, duration }) => {
       _throttledPlugins.add(pluginId)
       MessagePlugin.warning(
@@ -994,7 +995,7 @@ const initPlayback = async () => {
   )
 
   // 注册插件禁用监听：插件因崩溃次数过多被永久禁用，提示用户并停止换源
-  _unsubscribeDisabled = window.api.pluginNotice.onPluginDisabled(({ pluginId, reason }) => {
+  _unsubscribeDisabled = getPlatformService().pluginNotice.onPluginDisabled(({ pluginId, reason }) => {
     _disabledPlugins.add(pluginId)
     // 清理限流定时器（已禁用的插件不需要再恢复）
     const t = _throttleTimers.get(pluginId)

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { getPlatformService } from '@common/platform'
 
 interface LyricOption {
   fontSize: number
@@ -79,7 +80,7 @@ const backgroundMaskStr = ref<string>('rgba(0,0,0,0.2)')
 const loadOption = async () => {
   loading.value = true
   try {
-    const res = await window.electron.ipcRenderer.invoke('get-desktop-lyric-option')
+    const res = await getPlatformService().music.invoke('get-desktop-lyric-option')
     if (res) {
       option.value = { ...option.value, ...res }
       original.value = { ...option.value }
@@ -104,7 +105,7 @@ const applyOption = () => {
       shadowColor: shadowColorStr.value,
       backgroundMaskColor: backgroundMaskStr.value
     }
-    window.electron.ipcRenderer.send('set-desktop-lyric-option', payload, true)
+    getPlatformService().music.invoke('set-desktop-lyric-option', payload, true)
   } finally {
     setTimeout(() => (saving.value = false), 200)
   }
@@ -118,19 +119,18 @@ const resetOption = () => {
 
 const isOpen = ref<boolean>(false)
 watch(isOpen, (val) => {
-  window.electron?.ipcRenderer?.send?.('change-desktop-lyric', !!val)
+  getPlatformService().music.invoke('change-desktop-lyric', !!val)
 })
 
 onMounted(() => {
   loadOption()
   // 初始化打开状态并监听变化
-  window.electron?.ipcRenderer
-    ?.invoke?.('get-lyric-open-state')
+  getPlatformService().music.invoke('get-lyric-open-state')
     .then((open: boolean) => {
       isOpen.value = !!open
     })
     .catch(() => {})
-  window.electron?.ipcRenderer?.on?.('desktop-lyric-open-change', (_event, open: boolean) => {
+  getPlatformService().music.invoke('desktop-lyric-open-change', (_event, open: boolean) => {
     isOpen.value = !!open
   })
 })

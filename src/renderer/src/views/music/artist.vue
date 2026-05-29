@@ -12,6 +12,7 @@ import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
 import { useSettingsStore } from '@renderer/store/Settings'
 import songCover from '@assets/images/song.jpg'
 import type { SongList } from '@common/types/songList'
+import { getPlatformService } from '@common/platform'
 
 interface MusicItem {
   id?: number | string
@@ -98,7 +99,7 @@ const dedupeSongs = (list: any[]) => {
 }
 
 const requestArtistSongs = (page: number, limit: number) =>
-  window.api.music.requestSdk('getArtistSongs', {
+  getPlatformService().music.requestSdk('getArtistSongs', {
     source: artistSource.value,
     id: artistId.value,
     keyword: artistName.value,
@@ -119,7 +120,7 @@ const fetchArtistInfo = async () => {
 
   if (!artistId.value) return
   try {
-    const res = await window.api.music.requestSdk('getArtistInfo', {
+    const res = await getPlatformService().music.requestSdk('getArtistInfo', {
       source: artistSource.value,
       id: artistId.value
     })
@@ -201,7 +202,7 @@ async function setPic(offset: number) {
     if (songs.value[i].img) continue
     const source = songs.value[i].source || artistSource.value
     try {
-      const url = await window.api.music.requestSdk('getPic', {
+      const url = await getPlatformService().music.requestSdk('getPic', {
         source,
         songInfo: toRaw(songs.value[i])
       })

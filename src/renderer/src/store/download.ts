@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { getPlatformService } from '@common/platform'
 
 export enum DownloadStatus {
   Queued = 'queued',
@@ -45,26 +46,26 @@ export const useDownloadStore = defineStore('download', {
 
       // Load initial tasks
       try {
-        const tasks = await window.api.download.getTasks()
+        const tasks = await getPlatformService().download.getTasks()
         this.tasks = tasks
       } catch (error) {
         console.error('Failed to load tasks:', error)
       }
 
       // Setup listeners
-      window.api.download.onTaskAdded((_event, task) => {
+      getPlatformService().download.onTaskAdded((task) => {
         this.addTask(task)
       })
 
-      window.api.download.onTaskProgress((_event, updatedTask) => {
+      getPlatformService().download.onTaskProgress((updatedTask) => {
         this.updateTask(updatedTask)
       })
 
-      window.api.download.onTaskStatusChanged((_event, updatedTask) => {
+      getPlatformService().download.onTaskStatusChanged((updatedTask) => {
         this.updateTask(updatedTask)
       })
 
-      window.api.download.onTaskCompleted((_event, updatedTask) => {
+      getPlatformService().download.onTaskCompleted((updatedTask) => {
         this.updateTask(updatedTask)
         try {
           // 应用更新任务完成后推送系统通知，点击直接安装
@@ -76,7 +77,7 @@ export const useDownloadStore = defineStore('download', {
               })
               n.onclick = () => {
                 try {
-                  window.api.autoUpdater.quitAndInstall()
+                  getPlatformService().autoUpdater.quitAndInstall()
                 } catch (e) {
                   console.error('调用安装失败', e)
                 }
@@ -98,16 +99,16 @@ export const useDownloadStore = defineStore('download', {
         }
       })
 
-      window.api.download.onTaskError((_event, updatedTask) => {
+      getPlatformService().download.onTaskError((updatedTask) => {
         this.updateTask(updatedTask)
       })
 
-      window.api.download.onTaskDeleted((_event, taskId) => {
+      getPlatformService().download.onTaskDeleted((taskId) => {
         this.removeTask(taskId)
       })
 
       // 批量重置任务列表（用于清空队列时一次性刷新）
-      window.api.download.onTasksReset((_event, tasks) => {
+      getPlatformService().download.onTasksReset((tasks) => {
         this.tasks = tasks
       })
     },
@@ -136,48 +137,48 @@ export const useDownloadStore = defineStore('download', {
     },
 
     async pauseTask(taskId: string) {
-      await window.api.download.pauseTask(taskId)
+      await getPlatformService().download.pauseTask(taskId)
     },
 
     async pauseAllTasks() {
-      await window.api.download.pauseAllTasks()
+      await getPlatformService().download.pauseAllTasks()
     },
 
     async resumeAllTasks() {
-      await window.api.download.resumeAllTasks()
+      await getPlatformService().download.resumeAllTasks()
     },
 
     async validateFiles() {
-      const tasks = await window.api.download.validateFiles()
+      const tasks = await getPlatformService().download.validateFiles()
       this.tasks = tasks
     },
 
     async getMaxConcurrent() {
-      return await window.api.download.getMaxConcurrent()
+      return await getPlatformService().download.getMaxConcurrent()
     },
 
     async resumeTask(taskId: string) {
-      await window.api.download.resumeTask(taskId)
+      await getPlatformService().download.resumeTask(taskId)
     },
 
     async cancelTask(taskId: string) {
-      await window.api.download.cancelTask(taskId)
+      await getPlatformService().download.cancelTask(taskId)
     },
 
     async deleteTask(taskId: string, deleteFile: boolean = false) {
-      await window.api.download.deleteTask(taskId, deleteFile)
+      await getPlatformService().download.deleteTask(taskId, deleteFile)
     },
 
     async retryTask(taskId: string) {
-      await window.api.download.retryTask(taskId)
+      await getPlatformService().download.retryTask(taskId)
     },
 
     async openFileLocation(filePath: string) {
-      await window.api.download.openFileLocation(filePath)
+      await getPlatformService().download.openFileLocation(filePath)
     },
 
     async clearTasks(type: 'queue' | 'completed' | 'failed' | 'all') {
-      await window.api.download.clearTasks(type)
+      await getPlatformService().download.clearTasks(type)
     }
   },
   persist: false

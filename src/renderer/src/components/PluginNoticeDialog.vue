@@ -57,6 +57,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
 import { useRoute } from 'vue-router'
 import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
+import { getPlatformService } from '@common/platform'
 
 const route = useRoute()
 const localUserStore = LocalUserDetailStore()
@@ -153,7 +154,7 @@ const handleAction = async (actionType: string) => {
     if (actionType === 'update' && notice.value.updateUrl) {
       // 尝试内部更新
       try {
-        const result = await window.api.plugins.downloadAndAddPlugin(
+        const result = await getPlatformService().plugins.downloadAndAddPlugin(
           notice.value.updateUrl,
           notice.value.pluginType || 'cr',
           notice.value.pluginId
@@ -187,7 +188,7 @@ const handleAction = async (actionType: string) => {
       handleClose()
     } else if (actionType === 'confirm' && notice.value.updateUrl) {
       try {
-        const result = await window.api.plugins.downloadAndAddPlugin(
+        const result = await getPlatformService().plugins.downloadAndAddPlugin(
           notice.value!.updateUrl!,
           notice.value!.pluginType || 'cr'
         )
@@ -265,7 +266,7 @@ let event: () => void
 // 生命周期
 onMounted(() => {
   // 监听来自主进程的插件通知
-  event = window.api.pluginNotice.onPluginNotice(handlePluginNotice)
+  event = getPlatformService().pluginNotice.onPluginNotice(handlePluginNotice)
 })
 onUnmounted(() => {
   event()

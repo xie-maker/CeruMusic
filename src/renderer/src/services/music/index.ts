@@ -7,6 +7,7 @@ import {
   SongResponse,
   SongUrlResponse
 } from './service-base'
+import { getPlatformService } from '@common/platform'
 
 import {
   GetToplistArgs,
@@ -91,7 +92,7 @@ async function request(
   }
 
   // ipc request music service
-  const musicServiceRes: Response = await (window as any).api.music.request(api, args)
+  const musicServiceRes: Response = await getPlatformService().music.requestSdk(api, args)
   if (musicServiceRes.success) {
     return musicServiceRes.data
   } else {

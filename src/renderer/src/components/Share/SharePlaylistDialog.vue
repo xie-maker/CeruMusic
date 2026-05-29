@@ -253,6 +253,7 @@ import {
   getAvailableTemplates,
   type PlaylistPosterTemplate
 } from './posterRenderer'
+import { getPlatformService } from '@common/platform'
 
 interface PlaylistItem {
   id: string
@@ -511,7 +512,7 @@ async function doShare() {
       if (!pluginId) {
         throw new Error('未找到当前音源插件，请先配置音源后再开启网页播放')
       }
-      const codeRes = await window.api.share.getPluginCodeAndMd5(pluginId)
+      const codeRes = await getPlatformService().share.getPluginCodeAndMd5(pluginId)
       if ('error' in codeRes) {
         throw new Error(codeRes.error)
       }

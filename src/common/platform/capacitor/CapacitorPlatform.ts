@@ -7,7 +7,6 @@
 import type { PlatformService } from '../types'
 
 const noop = () => {}
-const noopAsync = async () => ({})
 const noopUnsubscribe = () => () => {}
 
 function todo(feature: string) {
@@ -25,15 +24,36 @@ export class CapacitorPlatform implements PlatformService {
   onFullscreenChanged = noopUnsubscribe as any
   onMusicCtrl = noopUnsubscribe as any
 
-  // === 音乐 SDK（TODO: 阶段 3 实现浏览器端 SDK） ===
+  // === 音乐 SDK ===
   music = {
     requestSdk: async (method: string, args: any) => {
-      todo('音乐 SDK')
-      return null
+      try {
+        // 动态导入浏览器版 SDK（延迟加载，减少初始包大小）
+        const { browserMain } = await import('@renderer/services/musicSdk/browser')
+        const { source, ...params } = args ?? {}
+        const sdk = browserMain(source || 'wy')
+
+        if (!sdk || typeof sdk[method] !== 'function') {
+          console.warn(`[CapacitorPlatform] SDK 方法不存在: ${source}/${method}`)
+          return null
+        }
+
+        return await sdk[method](params)
+      } catch (error) {
+        console.error('[CapacitorPlatform] music.requestSdk 失败:', error)
+        return null
+      }
     },
-    invoke: async (channel: string, ...args: any[]) => {
+    invoke: async (_channel: string, ..._args: any[]) => {
       todo('IPC 调用')
       return null
+    },
+    on: (_channel: string, _callback: (...args: any[]) => void) => {
+      todo('IPC 事件监听')
+      return () => {}
+    },
+    removeAllListeners: (_channel: string) => {
+      todo('IPC 移除监听器')
     }
   }
 
@@ -68,35 +88,129 @@ export class CapacitorPlatform implements PlatformService {
     onTasksReset: noopUnsubscribe as any
   }
 
-  // === 歌单管理（TODO: 阶段 3 实现 SQLite） ===
+  // === 歌单管理 ===
   songList = {
-    create: async () => { todo('歌单管理'); return null },
-    getAll: async () => [],
-    getById: async () => null,
-    delete: async () => {},
-    batchDelete: async () => {},
-    edit: async () => {},
-    updateCover: async () => {},
-    search: async () => [],
-    getStatistics: async () => ({}),
-    exists: async () => false,
-    addSongs: async () => {},
-    removeSong: async () => {},
-    removeSongs: async () => {},
-    clearSongs: async () => {},
-    getSongs: async () => [],
-    getSongCount: async () => 0,
-    hasSong: async () => false,
-    getSong: async () => null,
-    searchSongs: async () => [],
-    getSongStatistics: async () => ({}),
-    validateIntegrity: async () => ({}),
-    repairData: async () => ({}),
-    forceSave: async () => {},
-    reorderSongs: async () => {},
-    moveSong: async () => {},
-    getFavoritesId: async () => null,
-    setFavoritesId: async () => {}
+    create: async (name: string, description?: string, source?: string, meta?: Record<string, any>) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return songListService.createPlaylist(name, description, source as any, meta)
+    },
+    getAll: async () => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return { success: true, data: await songListService.getAllPlaylists() }
+    },
+    getById: async (hashId: string) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return { success: true, data: await songListService.getPlaylistById(hashId) }
+    },
+    delete: async (hashId: string) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      await songListService.deletePlaylist(hashId)
+      return { success: true }
+    },
+    batchDelete: async (hashIds: string[]) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return { success: true, data: await songListService.batchDeletePlaylists(hashIds) }
+    },
+    edit: async (hashId: string, updates: any) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      await songListService.updatePlaylist(hashId, updates)
+      return { success: true }
+    },
+    updateCover: async (hashId: string, coverImgUrl: string) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      await songListService.updateCover(hashId, coverImgUrl)
+      return { success: true }
+    },
+    search: async (keyword: string, source?: string) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return { success: true, data: await songListService.searchPlaylists(keyword, source) }
+    },
+    getStatistics: async () => ({ success: true, data: {} }),
+    exists: async (hashId: string) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return { success: true, data: await songListService.exists(hashId) }
+    },
+    addSongs: async (hashId: string, songs: any[]) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      await songListService.addSongs(hashId, songs)
+      return { success: true }
+    },
+    removeSong: async (hashId: string, songmid: string | number) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return { success: true, data: await songListService.removeSong(hashId, songmid) }
+    },
+    removeSongs: async (hashId: string, songmids: (string | number)[]) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return { success: true, data: await songListService.removeSongs(hashId, songmids) }
+    },
+    clearSongs: async (hashId: string) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      await songListService.clearSongs(hashId)
+      return { success: true }
+    },
+    getSongs: async (hashId: string) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return { success: true, data: await songListService.getSongs(hashId) }
+    },
+    getSongCount: async (hashId: string) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return { success: true, data: await songListService.getSongCount(hashId) }
+    },
+    hasSong: async (hashId: string, songmid: string | number) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return { success: true, data: await songListService.hasSong(hashId, songmid) }
+    },
+    getSong: async (hashId: string, songmid: string | number) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      const songs = await songListService.getSongs(hashId)
+      const song = songs.find(s => String(s.songmid) === String(songmid))
+      return { success: true, data: song || null }
+    },
+    searchSongs: async (hashId: string, keyword: string) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      const songs = await songListService.getSongs(hashId)
+      const filtered = songs.filter(s =>
+        (s.name && s.name.includes(keyword)) ||
+        (s.singer && s.singer.includes(keyword))
+      )
+      return { success: true, data: filtered }
+    },
+    getSongStatistics: async () => ({ success: true, data: {} }),
+    validateIntegrity: async () => ({ success: true, data: { isValid: true } }),
+    repairData: async () => ({ success: true, data: {} }),
+    forceSave: async () => ({ success: true }),
+    reorderSongs: async (hashId: string, songmids: (string | number)[]) => {
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      return { success: true, data: await songListService.reorderSongs(hashId, songmids) }
+    },
+    moveSong: async (hashId: string, songmid: string | number, toIndex: number) => {
+      // 移动歌曲需要重新排序
+      const { songListService } = await import('@renderer/services/sqlite/CapacitorSongListService')
+      const songs = await songListService.getSongs(hashId)
+      const songmids = songs.map(s => s.songmid)
+      const fromIndex = songmids.findIndex(id => String(id) === String(songmid))
+      if (fromIndex === -1) return { success: false }
+      songmids.splice(fromIndex, 1)
+      songmids.splice(toIndex, 0, songmid)
+      await songListService.reorderSongs(hashId, songmids)
+      return { success: true, data: true }
+    },
+    getFavoritesId: async () => {
+      try {
+        const stored = localStorage.getItem('favoritesHashId')
+        return { success: true, data: stored || null }
+      } catch {
+        return { success: true, data: null }
+      }
+    },
+    setFavoritesId: async (favoritesId: string) => {
+      try {
+        localStorage.setItem('favoritesHashId', favoritesId)
+        return { success: true }
+      } catch {
+        return { success: false }
+      }
+    }
   }
 
   // === AI（TODO: 阶段 4 实现 SSE 流） ===
@@ -120,13 +234,53 @@ export class CapacitorPlatform implements PlatformService {
     getCloseToTray: async () => false
   }
 
-  // === 插件管理（TODO: 阶段 4 实现 WebView 沙箱） ===
+  // === 插件管理 ===
   plugins = {
-    selectAndAddPlugin: async () => { todo('插件管理'); return null },
-    downloadAndAddPlugin: async () => { todo('插件管理'); return null },
-    uninstallPlugin: async () => { todo('插件管理'); return null },
-    addPlugin: async () => { todo('插件管理'); return null },
-    getPluginType: async () => null,
+    selectAndAddPlugin: async (type: 'lx' | 'cr') => {
+      // 浏览器环境：通过 URL 添加插件
+      const url = prompt(`请输入${type === 'lx' ? '洛雪' : '澜音'}插件 URL:`)
+      if (!url) return { canceled: true }
+
+      try {
+        const { browserPluginService } = await import('@renderer/services/plugin/BrowserPluginService')
+        const info = await browserPluginService.loadPlugin({ url }, type)
+        return { success: true, data: info }
+      } catch (error: any) {
+        return { success: false, error: error.message }
+      }
+    },
+    downloadAndAddPlugin: async (url: string, type: 'lx' | 'cr', targetPluginId?: string) => {
+      try {
+        const { browserPluginService } = await import('@renderer/services/plugin/BrowserPluginService')
+        const info = await browserPluginService.loadPlugin({ url }, type)
+        return { success: true, data: info }
+      } catch (error: any) {
+        return { success: false, error: error.message }
+      }
+    },
+    uninstallPlugin: async (pluginId: string) => {
+      try {
+        const { browserPluginService } = await import('@renderer/services/plugin/BrowserPluginService')
+        browserPluginService.unloadPlugin(pluginId)
+        return { success: true }
+      } catch (error: any) {
+        return { success: false, error: error.message }
+      }
+    },
+    addPlugin: async (pluginCode: string, pluginName: string, targetPluginId?: string) => {
+      try {
+        const { browserPluginService } = await import('@renderer/services/plugin/BrowserPluginService')
+        const info = await browserPluginService.loadPlugin({ code: pluginCode, name: pluginName }, 'cr')
+        return { success: true, data: info }
+      } catch (error: any) {
+        return { success: false, error: error.message }
+      }
+    },
+    getPluginType: async (pluginId: string) => {
+      const { browserPluginService } = await import('@renderer/services/plugin/BrowserPluginService')
+      const info = browserPluginService.getPluginInfo(pluginId)
+      return info?.type || null
+    },
     getConfigSchema: async () => null,
     getConfig: async () => null,
     saveConfig: async () => {},
@@ -136,8 +290,14 @@ export class CapacitorPlatform implements PlatformService {
     importToLocal: async () => null,
     getServiceLyric: async () => null,
     onDeepLinkAdd: noopUnsubscribe as any,
-    getPluginById: async () => null,
-    loadAllPlugins: async () => [],
+    getPluginById: async (id: string) => {
+      const { browserPluginService } = await import('@renderer/services/plugin/BrowserPluginService')
+      return browserPluginService.getPluginInfo(id)
+    },
+    loadAllPlugins: async () => {
+      const { browserPluginService } = await import('@renderer/services/plugin/BrowserPluginService')
+      return browserPluginService.getLoadedPlugins()
+    },
     getPluginLog: async () => ''
   }
 
@@ -167,9 +327,27 @@ export class CapacitorPlatform implements PlatformService {
 
   // === 插件通知 ===
   pluginNotice = {
-    onPluginNotice: noopUnsubscribe as any,
-    onPluginThrottle: noopUnsubscribe as any,
-    onPluginDisabled: noopUnsubscribe as any
+    onPluginNotice: (listener: (...args: any[]) => void) => {
+      let unsub: (() => void) | null = null
+      import('@renderer/services/plugin/BrowserPluginService').then(({ browserPluginService }) => {
+        unsub = browserPluginService.onPluginNotice(listener)
+      })
+      return () => { unsub?.() }
+    },
+    onPluginThrottle: (listener: (data: { pluginId: string; reason: string; duration?: number }) => void) => {
+      let unsub: (() => void) | null = null
+      import('@renderer/services/plugin/BrowserPluginService').then(({ browserPluginService }) => {
+        unsub = browserPluginService.onPluginThrottle(listener)
+      })
+      return () => { unsub?.() }
+    },
+    onPluginDisabled: (listener: (data: { pluginId: string; reason: string }) => void) => {
+      let unsub: (() => void) | null = null
+      import('@renderer/services/plugin/BrowserPluginService').then(({ browserPluginService }) => {
+        unsub = browserPluginService.onPluginDisabled(listener)
+      })
+      return () => { unsub?.() }
+    }
   }
 
   // === 本地音乐（TODO: 阶段 3 实现 CeruMediaStorePlugin） ===
@@ -181,8 +359,29 @@ export class CapacitorPlatform implements PlatformService {
     onScanProgress: noop,
     onScanFinished: noop,
     removeScanProgress: noop,
-    removeScanFinished: noop
+    removeScanFinished: noop,
+    getUrlById: async () => { todo('本地音乐 URL'); return '' },
+    getDirs: async () => [],
+    setDirs: async () => {},
+    getList: async () => [],
+    batchMatch: async () => { todo('批量匹配') },
+    getCoverBase64: async () => '',
+    onBatchMatchProgress: noop,
+    onBatchMatchFinished: noop,
+    removeBatchMatchListeners: noop,
+    clearIndex: async () => {}
   }
+
+  // === 文件操作 ===
+  file = {
+    readFile: async () => { todo('文件读取'); return new Uint8Array() }
+  }
+
+  // === Windows 任务栏缩略图工具栏（安卓不适用） ===
+  thumbar = undefined
+
+  // === 窗口标题/进度条（安卓不适用） ===
+  app = undefined
 
   // === 分享 ===
   share = {
@@ -201,7 +400,15 @@ export class CapacitorPlatform implements PlatformService {
 
   // === 剪贴板 ===
   clipboard = {
-    readText: async () => ''
+    readText: async () => {
+      try {
+        const { Clipboard } = await import('@capacitor/clipboard')
+        const result = await Clipboard.read()
+        return result.value || ''
+      } catch {
+        return ''
+      }
+    }
   }
 
   // === 系统音频捕获（安卓不支持） ===

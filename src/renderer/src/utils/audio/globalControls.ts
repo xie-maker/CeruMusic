@@ -1,5 +1,6 @@
 import { ControlAudioStore } from '@renderer/store/ControlAudio'
 import mediaSessionController from '@renderer/utils/audio/useSmtc'
+import { getPlatformService } from '@common/platform'
 
 let installed = false
 let smtcTimer: any = null
@@ -105,7 +106,7 @@ export function installGlobalMusicControls() {
 
   // 托盘或系统快捷键回调（若存在）
   try {
-    removeMusicCtrlListener = (window as any).api?.onMusicCtrl?.(() => {
+    removeMusicCtrlListener = getPlatformService().onMusicCtrl?.(() => {
       dispatch('toggle')
     })
   } catch {

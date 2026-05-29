@@ -6,6 +6,7 @@ import { Loading as TLoading } from 'tdesign-vue-next'
 import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
 import { storeToRefs } from 'pinia'
 import { useSettingsStore } from '@renderer/store/Settings'
+import { getPlatformService } from '@common/platform'
 
 const userStore = LocalUserDetailStore()
 const settingsStore = useSettingsStore()
@@ -251,7 +252,7 @@ const sendMessage = async () => {
     const handleStreamEnd = (data: { streamId: string }) => {
       if (data.streamId === streamId) {
         isLoading.value = false
-        window.api.ai.removeStreamListeners()
+        getPlatformService().ai.removeStreamListeners()
       }
     }
 
@@ -266,15 +267,15 @@ const sendMessage = async () => {
           }
         }
         isLoading.value = false
-        window.api.ai.removeStreamListeners()
+        getPlatformService().ai.removeStreamListeners()
       }
     }
 
-    window.api.ai.onStreamChunk(handleStreamChunk)
-    window.api.ai.onStreamEnd(handleStreamEnd)
-    window.api.ai.onStreamError(handleStreamError)
+    getPlatformService().ai.onStreamChunk(handleStreamChunk)
+    getPlatformService().ai.onStreamEnd(handleStreamEnd)
+    getPlatformService().ai.onStreamError(handleStreamError)
 
-    await window.api.ai.askStream(userMessage, streamId)
+    await getPlatformService().ai.askStream(userMessage, streamId)
   } catch (error: any) {
     console.error('AI流式API调用失败:', error)
     if (!aiContent) {
@@ -287,7 +288,7 @@ const sendMessage = async () => {
       }
     }
     isLoading.value = false
-    window.api.ai.removeStreamListeners()
+    getPlatformService().ai.removeStreamListeners()
   }
 
   scrollToBottom()

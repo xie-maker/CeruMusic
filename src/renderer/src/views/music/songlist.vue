@@ -39,6 +39,7 @@ import {
 } from '@renderer/utils/playlist/cloudSyncHelper'
 import SharePlaylistDialog from '@renderer/components/Share/SharePlaylistDialog.vue'
 import { useAuthStore } from '@renderer/store'
+import { getPlatformService } from '@common/platform'
 
 const settingsStore = useSettingsStore()
 
@@ -286,7 +287,7 @@ const loadPlaylists = async () => {
 
     // 读取“我的喜欢”ID并置顶与标记
     try {
-      const favRes = await (window as any).api?.songList?.getFavoritesId?.()
+      const favRes = await getPlatformService().songList.getFavoritesId()
       favoritesId.value = (favRes && favRes.data) || null
       if (favoritesId.value) {
         const idx = playlists.value.findIndex((p) => p.id === favoritesId.value)
@@ -708,7 +709,7 @@ const setPicForPlaylist = async (songs: any[], source: string) => {
   // 批量请求封面
   const picPromises = songsNeedPic.map(async (song, index) => {
     try {
-      const url = await window.api.music.requestSdk('getPic', {
+      const url = await getPlatformService().music.requestSdk('getPic', {
         source,
         songInfo: toRaw(song)
       })
@@ -764,7 +765,7 @@ const handleNetworkPlaylistImport = async (input: string) => {
       // QQ音乐歌单ID解析：优先通过 SDK 解析，失败再回退到正则
       let parsedId = ''
       try {
-        const parsed: any = await window.api.music.requestSdk('parsePlaylistId', {
+        const parsed: any = await getPlatformService().music.requestSdk('parsePlaylistId', {
           source: 'tx',
           url: input
         })
@@ -953,7 +954,7 @@ const handleNetworkPlaylistImport = async (input: string) => {
     const getListDetail = async (page: number) => {
       let detailResult: any
       try {
-        detailResult = (await window.api.music.requestSdk('getPlaylistDetail', {
+        detailResult = (await getPlatformService().music.requestSdk('getPlaylistDetail', {
           source: importPlatformType.value,
           id: playlistId,
           page: page
@@ -1182,7 +1183,7 @@ const downloadPlaylist = async (playlist: SongList) => {
       return
     }
 
-    await window.api.music.requestSdk('downloadBatchSongs', {
+    await getPlatformService().music.requestSdk('downloadBatchSongs', {
       source: songs[0]?.source || 'wy',
       tasks
     })

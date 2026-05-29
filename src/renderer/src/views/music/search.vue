@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router'
 import songCover from '@assets/images/song.jpg'
 import { useSettingsStore } from '@renderer/store/Settings'
 import { storeToRefs } from 'pinia'
+import { getPlatformService } from '@common/platform'
 
 interface MusicItem {
   id: number
@@ -157,7 +158,7 @@ const performSearch = async (reset = false) => {
       return
     }
     const source = localUserStore.userSource.source as unknown as string
-    const result = await window.api.music.requestSdk('search', {
+    const result = await getPlatformService().music.requestSdk('search', {
       source,
       keyword: keyword.value,
       page: currentPage.value,
@@ -193,7 +194,7 @@ async function setPic(offset: number, source: string) {
     // 聚合模式下每首歌使用自身 source 获取封面
     const songSource = (searchResults.value[i] as any).source || source
     try {
-      const url = await window.api.music.requestSdk('getPic', {
+      const url = await getPlatformService().music.requestSdk('getPic', {
         source: songSource,
         songInfo: toRaw(searchResults.value[i])
       })
@@ -270,7 +271,7 @@ const fetchArtists = async (reset = false) => {
       return
     }
     const source = localUserStore.userSource.source as unknown as string
-    const res = await window.api.music.requestSdk('searchArtist', {
+    const res = await getPlatformService().music.requestSdk('searchArtist', {
       source,
       keyword: keyword.value,
       page: artistPage.value,
@@ -313,7 +314,7 @@ const fetchPlaylists = async (reset = false) => {
       return
     }
     const source = localUserStore.userSource.source as unknown as string
-    const res = await window.api.music.requestSdk('searchPlaylist', {
+    const res = await getPlatformService().music.requestSdk('searchPlaylist', {
       source,
       keyword: keyword.value,
       page: playlistPage.value,

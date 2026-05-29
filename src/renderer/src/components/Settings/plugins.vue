@@ -350,6 +350,7 @@ import { ref, onMounted, nextTick, toRaw, computed } from 'vue'
 import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
 import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
 import ImportPlaylist from '@renderer/components/ServicePlugin/ImportPlaylist.vue'
+import { getPlatformService } from '@common/platform'
 
 interface PluginSource {
   name: string
@@ -526,7 +527,7 @@ async function getPlugins() {
   error.value = null
 
   try {
-    const result = await window.api.plugins.loadAllPlugins()
+    const result = await getPlatformService().plugins.loadAllPlugins()
     console.log(result)
     // 检查返回结果是否有错误
     if (result && typeof result === 'object' && 'error' in result) {
@@ -538,7 +539,7 @@ async function getPlugins() {
       // 异步获取每个插件的类型
       for (const p of plugins.value) {
         try {
-          const typeRes = await window.api.plugins.getPluginType(p.pluginId)
+          const typeRes = await getPlatformService().plugins.getPluginType(p.pluginId)
           if (typeRes?.data) {
             p.pluginType = typeRes.data
           }
@@ -583,7 +584,7 @@ async function handleImport() {
 
     if (importMethod.value === 'local') {
       // 本地导入：调用文件选择API
-      result = (await window.api.plugins.selectAndAddPlugin(type.value)) as ApiResult
+      result = (await getPlatformService().plugins.selectAndAddPlugin(type.value)) as ApiResult
     } else {
       // 在线导入：调用在线下载API
       if (!onlineUrl.value.trim()) {
@@ -601,7 +602,7 @@ async function handleImport() {
         return
       }
 
-      result = (await window.api.plugins.downloadAndAddPlugin(
+      result = (await getPlatformService().plugins.downloadAndAddPlugin(
         onlineUrl.value,
         type.value
       )) as ApiResult
@@ -648,7 +649,7 @@ async function uninstallPlugin(pluginId: string, pluginName: string) {
         // 用户确认后，开始卸载操作
         loading.value = true
 
-        const result = (await window.api.plugins.uninstallPlugin(pluginId)) as ApiResult
+        const result = (await getPlatformService().plugins.uninstallPlugin(pluginId)) as ApiResult
 
         // 检查结果是否包含错误
         if (result && typeof result === 'object' && 'error' in result) {
@@ -706,7 +707,7 @@ async function loadPluginLogs() {
   logsError.value = null
 
   try {
-    const result = await window.api.plugins.getPluginLog(currentLogPluginId.value)
+    const result = await getPlatformService().plugins.getPluginLog(currentLogPluginId.value)
     if (result && Array.isArray(result)) {
       logs.value = result
       // 换插件/刷新时清掉旧的折叠状态，避免索引串扰
@@ -807,11 +808,11 @@ async function openConfigDialog(plugin: Plugin) {
 
   try {
     // 获取配置 schema
-    const schemaRes = await window.api.plugins.getConfigSchema(plugin.pluginId)
+    const schemaRes = await getPlatformService().plugins.getConfigSchema(plugin.pluginId)
     configSchema.value = schemaRes?.data || []
 
     // 获取已保存的配置
-    const configRes = await window.api.plugins.getConfig(plugin.pluginId)
+    const configRes = await getPlatformService().plugins.getConfig(plugin.pluginId)
     const savedConfig = configRes?.data || {}
 
     // 用 schema 默认值填充
@@ -842,7 +843,7 @@ async function savePluginConfig() {
 
     // toRaw + JSON round-trip 去除 Vue Proxy，避免 IPC structuredClone 报错
     const plainConfig = JSON.parse(JSON.stringify(toRaw(configValues.value)))
-    await window.api.plugins.saveConfig(configPluginId.value, plainConfig)
+    await getPlatformService().plugins.saveConfig(configPluginId.value, plainConfig)
     MessagePlugin.success('配置已保存')
     configDialogVisible.value = false
   } catch (err: any) {
@@ -860,9 +861,9 @@ async function testPluginConnection() {
   try {
     // 先保存当前配置
     const plainConfig = JSON.parse(JSON.stringify(toRaw(configValues.value)))
-    await window.api.plugins.saveConfig(configPluginId.value, plainConfig)
+    await getPlatformService().plugins.saveConfig(configPluginId.value, plainConfig)
 
-    const result = await window.api.plugins.testConnection(configPluginId.value)
+    const result = await getPlatformService().plugins.testConnection(configPluginId.value)
     configTestResult.value = result
     if (result?.success) {
       MessagePlugin.success(result.message || '连接成功')

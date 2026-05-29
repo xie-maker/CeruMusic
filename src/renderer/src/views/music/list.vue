@@ -41,6 +41,7 @@ import {
 import { useRoute } from 'vue-router'
 import shareAPI from '@renderer/api/share'
 import songCover from '@assets/images/song.jpg'
+import { getPlatformService } from '@common/platform'
 
 interface MusicItem {
   singer: string
@@ -456,7 +457,7 @@ const fetchPlaylistSongs = async () => {
 const fetchLocalPlaylistSongs = async () => {
   try {
     // 调用本地歌单API获取歌曲列表
-    const result = await window.api.songList.getSongs(playlistInfo.value.id)
+    const result = await getPlatformService().songList.getSongs(playlistInfo.value.id)
 
     if (result.success && result.data) {
       songs.value = result.data
@@ -465,7 +466,7 @@ const fetchLocalPlaylistSongs = async () => {
       playlistInfo.value.total = songs.value.length
 
       // 获取歌单详细信息
-      const playlistResult = await window.api.songList.getById(playlistInfo.value.id)
+      const playlistResult = await getPlatformService().songList.getById(playlistInfo.value.id)
       if (playlistResult.success && playlistResult.data) {
         const playlist = playlistResult.data
 
@@ -700,8 +701,8 @@ const checkCloudSync = async () => {
 
         // 原子化更新本地数据库（先清空再添加，确保一致性）
         // 注意：对于超大歌单（如8000首），这可能会有短暂的IO耗时
-        await window.api.songList.clearSongs(playlistInfo.value.id)
-        await window.api.songList.addSongs(playlistInfo.value.id, localMappedSongs)
+        await getPlatformService().songList.clearSongs(playlistInfo.value.id)
+        await getPlatformService().songList.addSongs(playlistInfo.value.id, localMappedSongs)
 
         const newMeta = await syncLocalMetaWithCloudUpdate(
           playlistInfo.value.id,
@@ -776,7 +777,7 @@ const fetchNetworkPlaylistSongs = async (reset = false) => {
       id = id.replace(/^.*__/, '')
       console.log(id)
     }
-    const result = (await window.api.music.requestSdk(
+    const result = (await getPlatformService().music.requestSdk(
       method as 'getPlaylistDetail' | 'getLeaderboardDetail',
       {
         source: playlistInfo.value.source,
@@ -848,7 +849,7 @@ async function setPic(offset: number, source: string) {
     const tempImg = songs.value[i].img
     if (tempImg) continue
     try {
-      const url = await window.api.music.requestSdk('getPic', {
+      const url = await getPlatformService().music.requestSdk('getPic', {
         source,
         songInfo: toRaw(songs.value[i])
       })
@@ -868,7 +869,7 @@ async function setPic(offset: number, source: string) {
 const loadSongCover = async (song: any, signal: AbortSignal) => {
   if (song.img) return song.img
   try {
-    const url = await window.api.music.requestSdk('getPic', {
+    const url = await getPlatformService().music.requestSdk('getPic', {
       source: song.source || playlistInfo.value.source,
       songInfo: toRaw(song)
     })
@@ -946,7 +947,7 @@ const handleDownloadBatch = async (batchSongs: any[]) => {
   }
 
   try {
-    await window.api.music.requestSdk('downloadBatchSongs', {
+    await getPlatformService().music.requestSdk('downloadBatchSongs', {
       source: batchSongs[0]?.source || 'wy',
       tasks
     })
@@ -1040,7 +1041,7 @@ const handleRemoveFromLocalPlaylist = async (song: MusicItem) => {
   }
 
   try {
-    const result = await window.api.songList.removeSongs(playlistInfo.value.id, [song.songmid])
+    const result = await getPlatformService().songList.removeSongs(playlistInfo.value.id, [song.songmid])
 
     if (result.success) {
       // 从当前歌曲列表中移除
@@ -1239,7 +1240,7 @@ const handleRemoveBatchSelected = async (batchSongs: any[]) => {
       playlistInfo.value.total = songs.value.length
       MessagePlugin.success(`已移除 ${mids.length} 首歌曲`)
     } else {
-      const result = await window.api.songList.removeSongs(playlistInfo.value.id, mids)
+      const result = await getPlatformService().songList.removeSongs(playlistInfo.value.id, mids)
       if (result.success) {
         const set = new Set(mids)
         songs.value = songs.value.filter((s) => !set.has(s.songmid))
@@ -1349,7 +1350,7 @@ const handleFileSelect = async (event: Event) => {
 
       try {
         // 调用API更新歌单封面
-        const result = await window.api.songList.updateCover(playlistInfo.value.id, base64Data)
+        const result = await getPlatformService().songList.updateCover(playlistInfo.value.id, base64Data)
 
         if (result.success) {
           // 更新本地显示的封面
@@ -1514,7 +1515,7 @@ const handleSyncPlaylist = async () => {
     try {
       const method = isLeaderboard ? 'getLeaderboardDetail' : 'getPlaylistDetail'
       const requestId = isLeaderboard ? playlistId.replace(/^.*__/, '') : playlistId
-      detailResult = (await window.api.music.requestSdk(method, {
+      detailResult = (await getPlatformService().music.requestSdk(method, {
         source,
         id: requestId,
         page: page
@@ -1721,7 +1722,7 @@ const setPicForPlaylist = async (songs: any[], source: string) => {
   // 批量请求封面
   const picPromises = songsNeedPic.map(async (song, index) => {
     try {
-      const url = await window.api.music.requestSdk('getPic', {
+      const url = await getPlatformService().music.requestSdk('getPic', {
         source,
         songInfo: toRaw(song)
       })
@@ -1860,9 +1861,9 @@ const handleSyncFromCloud = async () => {
     // Replace local songs
     const currentMids = songs.value.map((s) => s.songmid)
     if (currentMids.length > 0) {
-      await window.api.songList.removeSongs(playlistInfo.value.id, currentMids)
+      await getPlatformService().songList.removeSongs(playlistInfo.value.id, currentMids)
     }
-    await window.api.songList.addSongs(playlistInfo.value.id, localSongs)
+    await getPlatformService().songList.addSongs(playlistInfo.value.id, localSongs)
 
     // Update view
     songs.value = localSongs

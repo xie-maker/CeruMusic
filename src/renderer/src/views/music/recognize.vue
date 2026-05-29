@@ -15,6 +15,7 @@ import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
 import { playSong } from '@renderer/utils/audio/globaPlayList'
 import { searchValue } from '@renderer/store/search'
 import { useRouter } from 'vue-router'
+import { getPlatformService } from '@common/platform'
 
 const audioStore = ControlAudioStore()
 const localUserStore = LocalUserDetailStore()
@@ -94,7 +95,7 @@ async function start() {
     }
 
     // 必须先调用 prepareCapture 拿一次性媒体采集授权（10s 过期）
-    const capturePrepared = await window.api.systemAudio.prepareCapture()
+    const capturePrepared = await getPlatformService().systemAudio.prepareCapture()
     if (!capturePrepared) {
       MessagePlugin.error('当前采集请求未获授权，请重新点击开始识别')
       reset()
@@ -102,7 +103,7 @@ async function start() {
     }
 
     // Get system audio stream
-    const sourceId = await window.api.systemAudio.getDefaultScreenSourceId()
+    const sourceId = await getPlatformService().systemAudio.getDefaultScreenSourceId()
     if (!sourceId) {
       MessagePlugin.error('无法获取系统音频采集源，请重新点击开始识别')
       reset()
@@ -210,7 +211,7 @@ async function tryRecognize(blob: Blob) {
         const fp = await gen(pcm8k)
         console.log('[AudioRecognize] Generated FP length:', fp.length)
 
-        const result = await window.api.music.requestSdk('recognize', {
+        const result = await getPlatformService().music.requestSdk('recognize', {
           source: 'wy',
           fp,
           duration: audioBuffer.duration
@@ -297,7 +298,7 @@ async function onFilePicked(e: Event) {
       const gen = (window as any).GenerateFP
       if (typeof gen === 'function') {
         const fp = await gen(slice)
-        const result = await window.api.music.requestSdk('recognize', {
+        const result = await getPlatformService().music.requestSdk('recognize', {
           source: 'wy',
           fp,
           duration: slice.length / 8000

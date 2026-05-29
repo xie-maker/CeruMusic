@@ -9,19 +9,14 @@ import type {
   RepairResult
 } from '../../../types/songList'
 import type { SongList, Songs } from '@common/types/songList'
-
-// 检查是否在 Electron 环境中
-const isElectron = typeof window !== 'undefined' && window.api && window.api.songList
+import { getPlatformService } from '@common/platform'
 
 /**
  * 歌单管理 API 封装类
  */
 class SongListService implements SongListAPI {
   private get songListAPI() {
-    if (!isElectron) {
-      throw new Error('当前环境不支持 Electron API 调用')
-    }
-    return window.api.songList
+    return getPlatformService().songList
   }
 
   // === 歌单管理方法 ===

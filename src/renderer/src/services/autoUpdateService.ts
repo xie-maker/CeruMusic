@@ -1,6 +1,7 @@
 import { NotifyPlugin, DialogPlugin } from 'tdesign-vue-next'
 
 import { reactive, h } from 'vue'
+import { getPlatformService } from '@common/platform'
 
 export interface DownloadProgress {
   percent: number
@@ -51,39 +52,39 @@ export class AutoUpdateService {
     this.isListening = true
 
     // 监听各种更新事件
-    window.api.autoUpdater.onCheckingForUpdate(() => {
+    getPlatformService().autoUpdater.onCheckingForUpdate(() => {
       this.showCheckingNotification()
     })
 
-    window.api.autoUpdater.onUpdateAvailable((_, updateInfo: UpdateInfo) => {
+    getPlatformService().autoUpdater.onUpdateAvailable((_, updateInfo: UpdateInfo) => {
       this.showUpdateAvailableDialog(updateInfo)
     })
 
-    window.api.autoUpdater.onUpdateNotAvailable(() => {
+    getPlatformService().autoUpdater.onUpdateNotAvailable(() => {
       this.showNoUpdateNotification()
     })
 
-    window.api.autoUpdater.onDownloadStarted((updateInfo: UpdateInfo) => {
+    getPlatformService().autoUpdater.onDownloadStarted((updateInfo: UpdateInfo) => {
       this.handleDownloadStarted(updateInfo)
     })
 
-    window.api.autoUpdater.onDownloadProgress((progress: DownloadProgress) => {
+    getPlatformService().autoUpdater.onDownloadProgress((progress: DownloadProgress) => {
       console.log(progress)
 
       this.showDownloadProgressNotification(progress)
     })
 
-    window.api.autoUpdater.onUpdateDownloaded(() => {
+    getPlatformService().autoUpdater.onUpdateDownloaded(() => {
       this.showUpdateDownloadedDialog()
     })
 
-    window.api.autoUpdater.onError(
+    getPlatformService().autoUpdater.onError(
       (error: string | { code?: string; message: string; raw?: string }) => {
         this.showUpdateErrorNotification(error)
       }
     )
 
-    window.api.autoUpdater.onDifferentialFallback((info: { reason: string }) => {
+    getPlatformService().autoUpdater.onDifferentialFallback((info: { reason: string }) => {
       this.showDifferentialFallbackNotification(info?.reason)
     })
   }
@@ -93,13 +94,13 @@ export class AutoUpdateService {
     if (!this.isListening) return
 
     this.isListening = false
-    window.api.autoUpdater.removeAllListeners()
+    getPlatformService().autoUpdater.removeAllListeners()
   }
 
   // 检查更新
   async checkForUpdates() {
     try {
-      await window.api.autoUpdater.checkForUpdates()
+      await getPlatformService().autoUpdater.checkForUpdates()
     } catch (error) {
       console.error('检查更新失败:', error)
       NotifyPlugin.error({
@@ -113,7 +114,7 @@ export class AutoUpdateService {
   // 下载更新
   async downloadUpdate(mode?: 'differential' | 'full') {
     try {
-      await window.api.autoUpdater.downloadUpdate(mode)
+      await getPlatformService().autoUpdater.downloadUpdate(mode)
     } catch (error) {
       console.error('下载更新失败:', error)
       NotifyPlugin.error({
@@ -127,7 +128,7 @@ export class AutoUpdateService {
   // 安装更新
   async quitAndInstall() {
     try {
-      await window.api.autoUpdater.quitAndInstall()
+      await getPlatformService().autoUpdater.quitAndInstall()
     } catch (error) {
       console.error('安装更新失败:', error)
       NotifyPlugin.error({
@@ -157,7 +158,7 @@ export class AutoUpdateService {
 
     // 先检测是否存在未完成的“应用更新”任务
     try {
-      const tasks = await window.api.download.getTasks()
+      const tasks = await getPlatformService().download.getTasks()
       const updateTask = (tasks || []).find((t: any) => t?.songInfo?.source === 'update')
 
       if (updateTask) {
@@ -187,7 +188,7 @@ export class AutoUpdateService {
             cancelBtn: '稍后再说',
             onConfirm: () => {
               try {
-                window.api.download.resumeTask(updateTask.id)
+                getPlatformService().download.resumeTask(updateTask.id)
                 NotifyPlugin.info({
                   title: '已继续下载',
                   content: '可在“下载管理”查看进度',
@@ -203,7 +204,7 @@ export class AutoUpdateService {
     } catch {}
 
     // 优先检测是否已下载完成，若已下载则提示安装
-    const path = await window.api.autoUpdater.getDownloadedPath(updateInfo)
+    const path = await getPlatformService().autoUpdater.getDownloadedPath(updateInfo)
     if (path) {
       DialogPlugin.confirm({
         header: `新版本 ${updateInfo.name} 已下载`,

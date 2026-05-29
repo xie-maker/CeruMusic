@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 
-const versions = reactive({ ...window.electron.process.versions })
+// Electron 专属功能，使用空对象作为占位符
+const versions = reactive({
+  electron: 'N/A',
+  chrome: 'N/A',
+  node: 'N/A'
+})
 </script>
 
 <template>

@@ -24,6 +24,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { MessagePlugin } from 'tdesign-vue-next'
 import { useSettingsStore } from '@renderer/store/Settings'
 import shareAPI from '@renderer/api/share'
+import { getPlatformService } from '@common/platform'
 
 const route = useRoute()
 const router = useRouter()
@@ -169,41 +170,41 @@ const handleWindowCloseRequest = () => {
     return
   }
   if (settings.closeToTray) {
-    window.api?.setMiniMode(true)
+    getPlatformService().setMiniMode(true)
   } else {
-    window.api?.close()
+    getPlatformService().close()
   }
 }
 
 onMounted(async () => {
   // 启动时把窗口标题置为软件名(若 PlayMusic 后续挂载且有歌,会立刻覆盖为"歌名 - 歌手")
   try {
-    ;(window as any).api?.app?.setTitle?.('澜音 Ceru Music')
-    ;(window as any).api?.app?.setProgress?.(-1)
+    getPlatformService().app?.setTitle?.('澜音 Ceru Music')
+    getPlatformService().app?.setProgress?.(-1)
   } catch (e) {
     console.warn('[app] init title/progress failed', e)
   }
 
-  if (window?.api?.share?.onShareOpen) {
-    unsubShareOpen = window.api.share.onShareOpen(({ id }) => songShareQueue.enqueueOrHandle(id))
+  if (getPlatformService().share?.onShareOpen) {
+    unsubShareOpen = getPlatformService().share.onShareOpen(({ id }) => songShareQueue.enqueueOrHandle(id))
   }
-  if (window?.api?.share?.onPlaylistShareOpen) {
-    unsubPlaylistShareOpen = window.api.share.onPlaylistShareOpen(({ id }) =>
+  if (getPlatformService().share?.onPlaylistShareOpen) {
+    unsubPlaylistShareOpen = getPlatformService().share.onPlaylistShareOpen(({ id }) =>
       playlistShareQueue.enqueueOrHandle(id)
     )
   }
   try {
-    const ids = (await window?.api?.share?.getPending?.()) || []
+    const ids = (await getPlatformService().share?.getPending?.()) || []
     for (const id of ids) songShareQueue.enqueueOrHandle(id)
-    const playlistIds = (await window?.api?.share?.getPendingPlaylistShares?.()) || []
+    const playlistIds = (await getPlatformService().share?.getPendingPlaylistShares?.()) || []
     for (const id of playlistIds) playlistShareQueue.enqueueOrHandle(id)
   } catch (e) {
     console.warn('[share] 拉取待处理分享 id 失败', e)
   }
 
   // 监听主进程发送的关闭请求（Ctrl+W / Alt+F4）
-  if (window.api?.windowClose?.onRequest) {
-    unsubCloseRequest = window.api.windowClose.onRequest(() => handleWindowCloseRequest())
+  if (getPlatformService().windowClose?.onRequest) {
+    unsubCloseRequest = getPlatformService().windowClose.onRequest(() => handleWindowCloseRequest())
   }
 })
 

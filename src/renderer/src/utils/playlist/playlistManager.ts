@@ -4,6 +4,7 @@ import type { SongList } from '@renderer/types/audio'
 import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
 import { useSettingsStore } from '@renderer/store/Settings'
 import { calculateBestQuality } from '@common/utils/quality'
+import { getPlatformService } from '@common/platform'
 
 /**
  * 一起听场景下的"member 点歌"分流 —— addToPlaylistAndPlay/End/replacePlaylist
@@ -132,7 +133,7 @@ export async function getSongRealUrl(song: SongList): Promise<string> {
   try {
     if ((song as any).source === 'local') {
       const id = (song as any).songmid
-      const url = await (window as any).api.localMusic.getUrlById(id)
+      const url = await getPlatformService().localMusic.getUrlById(id)
       if (typeof url === 'object' && url?.error) throw new Error(url.error)
       if (typeof url === 'string') return url
       throw new Error('本地歌曲URL获取失败')
@@ -153,7 +154,7 @@ export async function getSongRealUrl(song: SongList): Promise<string> {
 
     console.log(`使用音质: ${quality} - ${qualityMap[quality]}`)
     if (!LocalUserDetail.userSource.pluginId) throw new Error('插件都不配就想播放，想的倒挺美呢')
-    const urlData = await window.api.music.requestSdk('getMusicUrl', {
+    const urlData = await getPlatformService().music.requestSdk('getMusicUrl', {
       pluginId: LocalUserDetail.userSource.pluginId,
       source: song.source,
       songInfo: song as any,

@@ -30,6 +30,7 @@ import LyricCopyOverlay from './LyricCopyOverlay.vue'
 import ListenTogetherOverlay from './ListenTogetherOverlay.vue'
 import LtDanmakuLayer from '@renderer/components/ListenTogether/LtDanmakuLayer.vue'
 import { useLyricExtrasStore } from '@renderer/store/LyricExtras'
+import { getPlatformService } from '@common/platform'
 
 const playSetting = usePlaySettingStore()
 const settingsStore = useSettingsStore()
@@ -378,13 +379,13 @@ watch(
 // 切换全屏模式
 const toggleFullscreen = () => {
   // 状态由主进程的 onFullscreenChanged 事件回写，避免双重 toggle
-  window.api.toggleFullscreen()
+  getPlatformService().toggleFullscreen()
 }
 
 // 监听窗口化全屏状态变化（来自主进程）
 let unsubscribeFullscreen: (() => void) | null = null
 onMounted(async () => {
-  unsubscribeFullscreen = window.api.onFullscreenChanged((value: boolean) => {
+  unsubscribeFullscreen = getPlatformService().onFullscreenChanged((value: boolean) => {
     isFullscreen.value = value
   })
 })

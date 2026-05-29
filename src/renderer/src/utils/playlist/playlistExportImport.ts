@@ -1,5 +1,6 @@
 import type { SongList } from '@renderer/types/audio'
 import CryptoJS from 'crypto-js'
+import { getPlatformService } from '@common/platform'
 
 // 加密密钥，实际应用中应该使用更安全的方式存储
 const SECRET_KEY = 'CeruMusic-PlaylistSecretKey'
@@ -57,14 +58,14 @@ function getExtFromPath(p: string): string {
  * 从系统路径导入播放列表（支持 .cmpl/.cpl）
  */
 export async function importPlaylistFromPath(path: string): Promise<SongList[]> {
-  const buf = await (window as any).api.file.readFile(path)
+  const buf = await getPlatformService().file.readFile(path)
   const ext = getExtFromPath(path)
   if (ext === 'cpl') {
     const text = new TextDecoder().decode(buf)
     return decryptPlaylist(text)
   }
   if (ext === 'cmpl') {
-    const text = await gunzipToString(buf)
+    const text = await gunzipToString(buf.buffer)
     return decryptPlaylist(text)
   }
   throw new Error('不支持的文件类型')

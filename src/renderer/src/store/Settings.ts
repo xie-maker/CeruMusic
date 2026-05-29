@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { getPlatformService } from '@common/platform'
 
 export interface TagWriteOptions {
   basicInfo: boolean // 基础信息（标题、艺术家、专辑）
@@ -188,7 +189,7 @@ export const useSettingsStore = defineStore(
       // 把 closeToTray 同步到主进程，保险用（主进程 mainWindow.on('close') 会读取此值）
       if (typeof settings.value.closeToTray !== 'undefined') {
         try {
-          ;(window as any).api?.settings?.syncCloseToTray(settings.value.closeToTray)
+          ;getPlatformService().settings?.syncCloseToTray(settings.value.closeToTray)
         } catch {}
       }
     }

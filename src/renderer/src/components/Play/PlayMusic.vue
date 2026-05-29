@@ -59,6 +59,7 @@ import { useListenTogetherStore } from '@renderer/store/ListenTogether'
 import { useLyricExtrasStore } from '@renderer/store/LyricExtras'
 import { getSongRealUrl } from '@renderer/utils/playlist/playlistManager'
 import { waitForAudioReady } from '@renderer/utils/audio/audioHelpers'
+import { getPlatformService } from '@common/platform'
 
 const dlnaStore = useDlnaStore()
 const controlAudio = ControlAudioStore()
@@ -91,7 +92,7 @@ watch(
 
     const requestId = ++fallbackCoverRequestId
     try {
-      const url = await (window as any).api?.music?.requestSdk?.('getPic', {
+      const url = await getPlatformService().music.requestSdk('getPic', {
         source,
         songInfo: toRaw(info)
       })
@@ -212,7 +213,7 @@ const refreshLikeState = async () => {
       return
     }
     if (!cachedFavoritesId) {
-      const favIdRes = await window.api.songList.getFavoritesId()
+      const favIdRes = await getPlatformService().songList.getFavoritesId()
       cachedFavoritesId = (favIdRes && favIdRes.data) || null
     }
     if (!cachedFavoritesId) {
@@ -233,12 +234,12 @@ watch(
 onMounted(() => refreshLikeState())
 
 // === Windows 任务栏缩略图工具栏（Thumbnail Toolbar）状态同步 ===
-const thumbarApi = (window as any).api?.thumbar
+const thumbarApi = getPlatformService().thumbar
 let removeThumbarToggleLikeListener: (() => void) | null = null
 
 // === 窗口标题 + 任务栏/Dock 进度条同步 ===
 // 启动默认标题在 App.vue 推一次,这里只在有歌时切换"歌名 - 歌手",无歌回退默认名。
-const appApi = (window as any).api?.app
+const appApi = getPlatformService().app
 const DEFAULT_WINDOW_TITLE = '澜音 Ceru Music'
 const pushWindowTitle = () => {
   if (!appApi?.setTitle) return
@@ -366,24 +367,24 @@ const desktopLyricLocked = ref(false)
 const toggleDesktopLyric = async () => {
   try {
     if (!desktopLyricOpen.value) {
-      window.electron?.ipcRenderer?.send?.('change-desktop-lyric', true)
+      getPlatformService().music.invoke('change-desktop-lyric', true)
       desktopLyricOpen.value = true
       // 恢复最新锁定状态
-      const lock = await window.electron?.ipcRenderer?.invoke?.('get-lyric-lock-state')
+      const lock = await getPlatformService().music.invoke('get-lyric-lock-state')
       desktopLyricLocked.value = !!lock
       return
     }
     // 已打开
-    const lock = await window.electron?.ipcRenderer?.invoke?.('get-lyric-lock-state')
+    const lock = await getPlatformService().music.invoke('get-lyric-lock-state')
     desktopLyricLocked.value = !!lock
     if (desktopLyricLocked.value) {
       // 先解锁，本次不关闭
-      window.electron?.ipcRenderer?.send?.('toogleDesktopLyricLock', false)
+      getPlatformService().music.invoke('toogleDesktopLyricLock', false)
       desktopLyricLocked.value = false
       return
     }
     // 未锁定则关闭
-    window.electron?.ipcRenderer?.send?.('change-desktop-lyric', false)
+    getPlatformService().music.invoke('change-desktop-lyric', false)
     desktopLyricOpen.value = false
   } catch (e) {
     console.error('切换桌面歌词失败:', e)
@@ -529,7 +530,7 @@ onMounted(async () => {
   lyricOpenChangeHandler = async (_: any, visible: boolean) => {
     desktopLyricOpen.value = !!visible
     if (desktopLyricOpen.value) {
-      const lock = await window.electron?.ipcRenderer?.invoke?.('get-lyric-lock-state')
+      const lock = await getPlatformService().music.invoke('get-lyric-lock-state')
       desktopLyricLocked.value = !!lock
     } else {
       desktopLyricLocked.value = false
@@ -539,14 +540,14 @@ onMounted(async () => {
     desktopLyricOpen.value = false
     desktopLyricLocked.value = false
   }
-  window.electron?.ipcRenderer?.on?.('toogleDesktopLyricLock', lyricLockHandler)
-  window.electron?.ipcRenderer?.on?.('desktop-lyric-open-change', lyricOpenChangeHandler)
-  window.electron?.ipcRenderer?.on?.('closeDesktopLyric', lyricCloseHandler)
+  getPlatformService().music.invoke('toogleDesktopLyricLock', lyricLockHandler)
+  getPlatformService().music.invoke('desktop-lyric-open-change', lyricOpenChangeHandler)
+  getPlatformService().music.invoke('closeDesktopLyric', lyricCloseHandler)
   // 初始化同步当前打开与锁定状态
   try {
-    const open = await window.electron?.ipcRenderer?.invoke?.('get-lyric-open-state')
+    const open = await getPlatformService().music.invoke('get-lyric-open-state')
     desktopLyricOpen.value = !!open
-    const lock = await window.electron?.ipcRenderer?.invoke?.('get-lyric-lock-state')
+    const lock = await getPlatformService().music.invoke('get-lyric-lock-state')
     desktopLyricLocked.value = !!lock
   } catch {}
   window.addEventListener('global-music-control', globalControls)
@@ -580,16 +581,16 @@ onMounted(async () => {
 // 组件卸载时清理
 onUnmounted(() => {
   if (lyricLockHandler) {
-    window.electron?.ipcRenderer?.removeListener?.('toogleDesktopLyricLock', lyricLockHandler)
+    getPlatformService().music.invoke('toogleDesktopLyricLock', lyricLockHandler)
   }
   if (lyricOpenChangeHandler) {
-    window.electron?.ipcRenderer?.removeListener?.(
+    getPlatformService().music.invoke(
       'desktop-lyric-open-change',
       lyricOpenChangeHandler
     )
   }
   if (lyricCloseHandler) {
-    window.electron?.ipcRenderer?.removeListener?.('closeDesktopLyric', lyricCloseHandler)
+    getPlatformService().music.invoke('closeDesktopLyric', lyricCloseHandler)
   }
   window.removeEventListener('global-music-control', globalControls)
   if (openPlaylistHandler) window.removeEventListener('open-playlist', openPlaylistHandler)
@@ -681,8 +682,8 @@ const onToggleLike = async () => {
       return
     }
 
-    // 读取持久化的“我的喜欢”歌单ID
-    const favIdRes = await window.api.songList.getFavoritesId()
+    // 读取持久化的”我的喜欢”歌单ID
+    const favIdRes = await getPlatformService().songList.getFavoritesId()
     let favoritesId: string | null = (favIdRes && favIdRes.data) || null
 
     // 如果已有ID但歌单不存在，则置空
@@ -709,7 +710,7 @@ const onToggleLike = async () => {
         favoritesId = createRes.data.id
       }
       // 持久化ID到主进程配置
-      await window.api.songList.setFavoritesId(favoritesId)
+      await getPlatformService().songList.setFavoritesId(favoritesId)
     }
     cachedFavoritesId = favoritesId
 

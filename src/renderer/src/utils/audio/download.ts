@@ -8,6 +8,7 @@ import {
   compareQuality,
   calculateBestQuality
 } from '@common/utils/quality'
+import { getPlatformService } from '@common/platform'
 
 interface MusicItem {
   singer: string
@@ -206,7 +207,7 @@ async function downloadSingleSong(songInfo: MusicItem): Promise<void> {
     // 服务插件歌曲（如 navidrome）：自带 url，无需插件解析，使用 lazy 模式直接传 url
     const hasDirectUrl = !!(songInfo as any).url && typeof (songInfo as any).url === 'string'
 
-    const result = await window.api.music.requestSdk('downloadSingleSong', {
+    const result = await getPlatformService().music.requestSdk('downloadSingleSong', {
       pluginId: LocalUserDetail.userSource.pluginId?.toString() || '',
       source: songInfo.source,
       quality,

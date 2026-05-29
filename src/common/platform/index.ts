@@ -43,7 +43,7 @@ export function getPlatformService(): PlatformService {
     }
   }
 
-  return service
+  return service!
 }
 
 /**

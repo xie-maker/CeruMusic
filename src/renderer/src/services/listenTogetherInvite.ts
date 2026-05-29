@@ -19,29 +19,23 @@ import { extractCodeFromShareText } from '@renderer/components/ListenTogether/pa
 import { getRoomPreview, resolveRoom } from '@renderer/api/listenTogether'
 import { useAuthStore } from '@renderer/store/Auth'
 import { useListenTogetherStore } from '@renderer/store/ListenTogether'
+import { getPlatformService } from '@common/platform'
 
 const dismissedCodes = new Set<string>()
 let running = false
 
 export type InviteTriggerSource = 'deeplink' | 'clipboard'
 
-/** 读剪贴板 —— 优先主进程,失败时降级到 navigator.clipboard */
+/** 读剪贴板 —— 优先 PlatformService,失败时降级到 navigator.clipboard */
 async function readClipboardText(): Promise<string> {
-  /* 1) 通过 electron.ipcRenderer.invoke 直接调主进程 IPC ——
-   *    与 Provider.vue 中其他主进程调用保持一致,不依赖 preload 的 window.api.* 包装层,
-   *    避免 preload bundle 未重编时 window.api.clipboard 是 undefined。 */
+  /* 1) 通过 PlatformService 读剪贴板 —— Electron 走 IPC, Capacitor 走原生插件 */
   try {
-    const fromMain = await (window as any).electron?.ipcRenderer?.invoke?.('clipboard:read-text')
-    if (typeof fromMain === 'string' && fromMain.length > 0) return fromMain
+    const text = await getPlatformService().clipboard.readText()
+    if (typeof text === 'string' && text.length > 0) return text
   } catch (e) {
-    console.warn('[lt-invite] 主进程剪贴板 IPC 失败:', e)
+    console.warn('[lt-invite] PlatformService 剪贴板读取失败:', e)
   }
-  /* 2) 同样作为兜底也试一下 window.api.clipboard(若 preload 重编了) */
-  try {
-    const fromApi = await (window as any).api?.clipboard?.readText?.()
-    if (typeof fromApi === 'string' && fromApi.length > 0) return fromApi
-  } catch {}
-  /* 3) 最后兜底:navigator.clipboard —— 焦点时序不对可能返回空,可接受 */
+  /* 2) 最后兜底:navigator.clipboard —— 焦点时序不对可能返回空,可接受 */
   try {
     return (await navigator.clipboard.readText()) || ''
   } catch (e) {

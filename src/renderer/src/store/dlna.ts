@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { getPlatformService } from '@common/platform'
 
 export const useDlnaStore = defineStore('dlna', () => {
   const devices = ref<any[]>([])
@@ -9,10 +10,10 @@ export const useDlnaStore = defineStore('dlna', () => {
   const startSearch = async () => {
     isSearching.value = true
     try {
-      await window.electron.ipcRenderer.invoke('dlna:startSearch')
+      await getPlatformService().music.invoke('dlna:startSearch')
       setTimeout(async () => {
         try {
-          devices.value = await window.electron.ipcRenderer.invoke('dlna:getDevices')
+          devices.value = await getPlatformService().music.invoke('dlna:getDevices')
         } catch (e) {
           console.error('DLNA get devices error', e)
         }
@@ -26,7 +27,7 @@ export const useDlnaStore = defineStore('dlna', () => {
 
   const stopSearch = async () => {
     try {
-      await window.electron.ipcRenderer.invoke('dlna:stopSearch')
+      await getPlatformService().music.invoke('dlna:stopSearch')
     } catch (e) {
       console.error('DLNA stop search error', e)
     }
@@ -36,7 +37,7 @@ export const useDlnaStore = defineStore('dlna', () => {
   const play = async (url: string, title: string) => {
     if (!currentDevice.value) return
     try {
-      await window.electron.ipcRenderer.invoke('dlna:play', {
+      await getPlatformService().music.invoke('dlna:play', {
         url,
         location: currentDevice.value.location,
         title
@@ -48,7 +49,7 @@ export const useDlnaStore = defineStore('dlna', () => {
 
   const pause = async () => {
     try {
-      await window.electron.ipcRenderer.invoke('dlna:pause')
+      await getPlatformService().music.invoke('dlna:pause')
     } catch (e) {
       console.error('DLNA pause error', e)
     }
@@ -56,7 +57,7 @@ export const useDlnaStore = defineStore('dlna', () => {
 
   const resume = async () => {
     try {
-      await window.electron.ipcRenderer.invoke('dlna:resume')
+      await getPlatformService().music.invoke('dlna:resume')
     } catch (e) {
       console.error('DLNA resume error', e)
     }
@@ -64,7 +65,7 @@ export const useDlnaStore = defineStore('dlna', () => {
 
   const stop = async () => {
     try {
-      await window.electron.ipcRenderer.invoke('dlna:stop')
+      await getPlatformService().music.invoke('dlna:stop')
     } catch (e) {
       console.error('DLNA stop error', e)
     }
@@ -72,7 +73,7 @@ export const useDlnaStore = defineStore('dlna', () => {
 
   const seek = async (seconds: number) => {
     try {
-      await window.electron.ipcRenderer.invoke('dlna:seek', seconds)
+      await getPlatformService().music.invoke('dlna:seek', seconds)
     } catch (e) {
       console.error('DLNA seek error', e)
     }
@@ -80,7 +81,7 @@ export const useDlnaStore = defineStore('dlna', () => {
 
   const setVolume = async (volume: number) => {
     try {
-      await window.electron.ipcRenderer.invoke('dlna:setVolume', volume)
+      await getPlatformService().music.invoke('dlna:setVolume', volume)
     } catch (e) {
       console.error('DLNA setVolume error', e)
     }
@@ -88,7 +89,7 @@ export const useDlnaStore = defineStore('dlna', () => {
 
   const getPosition = async () => {
     try {
-      return await window.electron.ipcRenderer.invoke('dlna:getPosition')
+      return await getPlatformService().music.invoke('dlna:getPosition')
     } catch (e) {
       console.error('DLNA getPosition error', e)
       return 0

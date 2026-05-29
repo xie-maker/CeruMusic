@@ -2,6 +2,7 @@
 import { ref, watch, reactive } from 'vue'
 import { useMessage, useDialog } from 'naive-ui'
 import { SearchIcon } from 'tdesign-icons-vue-next'
+import { getPlatformService } from '@common/platform'
 
 const props = defineProps<{
   show: boolean
@@ -46,7 +47,7 @@ watch(
       formModel.lrc = props.song.lrc || ''
 
       // Load full lyrics
-      const api = (window as any).api
+      const api = getPlatformService()
       api.localMusic.getLyric(props.song.songmid).then((lrc: string) => {
         if (lrc) formModel.lrc = lrc
       })
@@ -109,7 +110,7 @@ const handleSave = async () => {
   if (!props.song?.path) return
   saving.value = true
   try {
-    const api = (window as any).api
+    const api = getPlatformService()
     const res = await api.localMusic.writeTags(
       props.song.path,
       {
@@ -184,7 +185,7 @@ const handleSearch = async () => {
     // We can run source searches in parallel for better performance
     const searchPromises = sources.map(async (src) => {
       try {
-        const res = await (window as any).api.music.requestSdk('search', {
+        const res = await getPlatformService().music.requestSdk('search', {
           source: src,
           keyword: kw,
           page: 1,
@@ -202,7 +203,7 @@ const handleSearch = async () => {
             if (!item?.img) {
               itemsWithIndex.push({ item, index })
               tasks.push(
-                (window as any).api.music.requestSdk('getPic', {
+                getPlatformService().music.requestSdk('getPic', {
                   source: src,
                   songInfo: item
                 })
@@ -262,7 +263,7 @@ const applyResult = async (item: any) => {
     } else {
       // Try to fetch image if missing
       try {
-        const pic = await (window as any).api.music.requestSdk('getPic', {
+        const pic = await getPlatformService().music.requestSdk('getPic', {
           source: item.source,
           songInfo: item
         })
@@ -275,7 +276,7 @@ const applyResult = async (item: any) => {
 
     // Fetch lyrics
     try {
-      const lyricRes = await (window as any).api.music.requestSdk('getLyric', {
+      const lyricRes = await getPlatformService().music.requestSdk('getLyric', {
         source: item.source,
         songInfo: toRaw(item),
         useFormat: lyricFormat.value === 'word-by-word' ? 'word-by-word' : null

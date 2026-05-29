@@ -25,6 +25,7 @@
 <script lang="ts" setup>
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next'
 import { onMounted, ref } from 'vue'
+import { getPlatformService } from '@common/platform'
 
 // 定义事件
 const emit = defineEmits<{
@@ -36,7 +37,7 @@ const cacheInfo: any = ref({})
 const loadCacheInfo = async (forceRefresh = false) => {
   try {
     console.log('正在获取缓存信息...', forceRefresh ? '(强制刷新)' : '')
-    const res = await window.api.musicCache.getInfo()
+    const res = await getPlatformService().musicCache.getInfo()
     console.log('获取到缓存信息:', res)
     cacheInfo.value = res
   } catch (error) {
@@ -67,7 +68,7 @@ const clearCache = () => {
         cacheInfo.value = { ...cacheInfo.value, clearing: true }
 
         // 执行清除操作
-        const result = await window.api.musicCache.clear()
+        const result = await getPlatformService().musicCache.clear()
 
         if (result.success) {
           console.log('缓存清除成功，开始更新界面')

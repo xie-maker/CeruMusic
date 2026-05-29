@@ -247,6 +247,7 @@ import {
   parseLrcToLines,
   type SongPosterTemplate
 } from './posterRenderer'
+import { getPlatformService } from '@common/platform'
 
 interface Props {
   modelValue: boolean
@@ -576,7 +577,7 @@ async function doShare() {
     }
     setStatus('读取插件指纹...')
     setStep(0, 'active', '解析插件指纹...')
-    const codeRes = await window.api.share.getPluginCodeAndMd5(pluginId)
+    const codeRes = await getPlatformService().share.getPluginCodeAndMd5(pluginId)
     if ('error' in codeRes) {
       setStep(0, 'error', codeRes.error)
       setStatus(codeRes.error, 'error')
@@ -642,13 +643,13 @@ async function doShare() {
 
       setStep(1, 'active', '正在拉取歌词与热评...')
       const [lyricRes, cmtRes] = await Promise.allSettled([
-        window.api.music.requestSdk('getLyric', {
+        getPlatformService().music.requestSdk('getLyric', {
           source: src,
           songInfo: cleanSong,
           grepLyricInfo: false,
           useStrictMode: false
         }),
-        window.api.music.requestSdk('getHotComment', {
+        getPlatformService().music.requestSdk('getHotComment', {
           source: src,
           songInfo: cleanSong,
           page: 1,

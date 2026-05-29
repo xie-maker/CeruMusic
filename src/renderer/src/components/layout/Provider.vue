@@ -27,6 +27,7 @@ import {
   importPlaylistFromPath,
   validateImportedPlaylist
 } from '@renderer/utils/playlist/playlistExportImport'
+import { getPlatformService } from '@common/platform'
 import {
   installGlobalMusicControls,
   uninstallGlobalMusicControls
@@ -366,7 +367,7 @@ onMounted(() => {
   )
 
   // 监听 Logto 回调
-  window.electron?.ipcRenderer?.on?.('logto-callback', (_: any, url: string) => {
+  getPlatformService().music.on('logto-callback', (_: any, url: string) => {
     authStore.handleCallback(url)
   })
 
@@ -378,25 +379,17 @@ onMounted(() => {
     console.log('forward', name, val)
     window.dispatchEvent(new CustomEvent('global-music-control', { detail: { name, val } }))
   }
-  window.electron?.ipcRenderer?.on?.('play', () => forward('play'))
-  window.electron?.ipcRenderer?.on?.('pause', () => forward('pause'))
-  window.electron?.ipcRenderer?.on?.('toggle', () => forward('toggle'))
-  window.electron?.ipcRenderer?.on?.('playPrev', () => forward('playPrev'))
-  window.electron?.ipcRenderer?.on?.('playNext', () => forward('playNext'))
-  window.electron?.ipcRenderer?.on?.('volumeDelta', (_: any, val: number) =>
-    forward('volumeDelta', val)
-  )
-  window.electron?.ipcRenderer?.on?.('seekDelta', (_: any, val: number) =>
-    forward('seekDelta', val)
-  )
-  window.electron?.ipcRenderer?.on?.('setPlayMode', (_: any, val: string) =>
-    forward('setPlayMode', val)
-  )
+  // 使用 PlatformService 的 onMusicCtrl 监听音乐控制事件
+  getPlatformService().onMusicCtrl((_event: Event, args: any) => {
+    const name = args?.name || args?.type
+    const val = args?.val
+    if (name) forward(name, val)
+  })
 
   // Audio Output Selector Shortcut
   // Remove existing listeners to prevent duplicates/HMR issues
-  window.electron?.ipcRenderer?.removeAllListeners?.('hotkeys:toggle-audio-output-selector')
-  window.electron?.ipcRenderer?.on?.('hotkeys:toggle-audio-output-selector', () => {
+  getPlatformService().music.removeAllListeners('hotkeys:toggle-audio-output-selector')
+  getPlatformService().music.on('hotkeys:toggle-audio-output-selector', () => {
     // If device B is set and different from A, we prioritize toggling directly
     // This allows "Quick Comparison" as requested.
     if (
@@ -412,7 +405,7 @@ onMounted(() => {
   })
 
   // 全局监听打开歌单文件
-  window.electron?.ipcRenderer?.on?.('open-playlist-file', (_: any, filePath: string) => {
+  getPlatformService().music.on('open-playlist-file', (_: any, filePath: string) => {
     const fileName = filePath.replace(/^.*[\\/]/, '')
     if (processedPaths.has(filePath)) return
     processedPaths.add(filePath)
@@ -424,8 +417,7 @@ onMounted(() => {
     confirmImportPromptPath(filePath, fileName, silent)
   })
   // 首次挂载时主动拉取待处理文件队列，防止事件在挂载前发送导致丢失
-  window.electron?.ipcRenderer
-    ?.invoke?.('get-pending-open-playlist-files')
+  getPlatformService().music.invoke('get-pending-open-playlist-files')
     .then((paths: string[]) => {
       paths?.forEach((p) => {
         if (processedPaths.has(p)) return
@@ -455,8 +447,7 @@ onMounted(() => {
       /* 一起听邀请:启动后(authStore.init() 已触发)再检查冷启动累积的 deeplink code
        * + 剪贴板里可能有的 #CODE#。具体是否真的弹由 maybeTriggerLtInvite 内的 welcome
        * 守卫决定 —— 用户没过完欢迎页前先攒着,等 isWelcomeRoute 变 false 时再发。 */
-      window.electron?.ipcRenderer
-        ?.invoke?.('get-pending-lt-codes')
+      getPlatformService().music.invoke('get-pending-lt-codes')
         .then((codes: string[]) => {
           if (codes?.length) console.log('[lt] 取回冷启动 pending codes:', codes)
           for (const code of codes || []) queueLtDeeplinkCode(code)
@@ -468,10 +459,8 @@ onMounted(() => {
   // 教程初始化监听
   window.addEventListener('guide:init', handleGuideInit as any)
 
-  /* 监听主进程 cerumusic://lt/<code> 推过来的 code(运行时 deeplink) ——
-   * 用 electron.ipcRenderer 直连,而不是 window.api.listenTogether.onShareOpen,
-   * 避免 preload bundle 未重编时拿不到包装层。 */
-  window.electron?.ipcRenderer?.on?.('lt-share-open', (_: any, payload: { code: string }) => {
+  /* 监听主进程 cerumusic://lt/<code> 推过来的 code(运行时 deeplink) */
+  getPlatformService().music.on('lt-share-open', (_: any, payload: { code: string }) => {
     console.log('[lt] 收到 deeplink IPC:', payload)
     if (payload?.code) queueLtDeeplinkCode(payload.code)
   })

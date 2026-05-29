@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
+import { getPlatformService } from '@common/platform'
 
 function loadScript(src: string) {
   return new Promise<void>((resolve, reject) => {
@@ -51,7 +52,7 @@ async function processFile(id: string, filePath: string) {
     // Read file via exposed API
     // Note: We need to use arrayBuffer.
     // The exposed api.file.readFile returns Buffer (Uint8Array) which is compatible.
-    const buffer = await (window as any).api.file.readFile(filePath)
+    const buffer = await getPlatformService().file.readFile(filePath)
     if (!buffer) throw new Error('File read failed')
 
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
@@ -80,7 +81,7 @@ async function processFile(id: string, filePath: string) {
       if (typeof gen === 'function') {
         const fp = await gen(slice)
         // Send back result
-        ;(window as any).electron.ipcRenderer.send('worker:fp-generated', {
+        ;getPlatformService().music.invoke('worker:fp-generated', {
           id,
           fp,
           duration: slice.length / 8000,
@@ -94,7 +95,7 @@ async function processFile(id: string, filePath: string) {
     }
   } catch (e: any) {
     console.error('Worker processing failed:', e)
-    ;(window as any).electron.ipcRenderer.send('worker:fp-error', {
+    ;getPlatformService().music.invoke('worker:fp-error', {
       id,
       error: e?.message || 'Unknown error'
     })
@@ -103,16 +104,16 @@ async function processFile(id: string, filePath: string) {
 
 onMounted(() => {
   console.log('Recognition Worker Mounted')
-  ;(window as any).electron.ipcRenderer.on('worker:start-task', (_e, { id, filePath }) => {
+  ;getPlatformService().music.on('worker:start-task', (_e, { id, filePath }) => {
     console.log('Worker received task:', id, filePath)
     processFile(id, filePath)
   })
   // Notify main process that worker is ready
-  ;(window as any).electron.ipcRenderer.send('worker:ready')
+  ;getPlatformService().music.invoke('worker:ready')
 })
 
 onUnmounted(() => {
-  ;(window as any).electron.ipcRenderer.removeAllListeners('worker:start-task')
+  ;getPlatformService().music.removeAllListeners('worker:start-task')
 })
 </script>
 

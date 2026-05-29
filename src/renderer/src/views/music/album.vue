@@ -12,6 +12,7 @@ import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
 import { useSettingsStore } from '@renderer/store/Settings'
 import songCover from '@assets/images/song.jpg'
 import type { SongList } from '@common/types/songList'
+import { getPlatformService } from '@common/platform'
 
 interface MusicItem {
   singer: string
@@ -84,7 +85,7 @@ const fetchAlbumSongs = async (reset = false) => {
   }
 
   try {
-    const res = await window.api.music.requestSdk('getAlbumSongs', {
+    const res = await getPlatformService().music.requestSdk('getAlbumSongs', {
       source: albumSource.value,
       id: albumId.value,
       keyword: `${albumName.value} ${albumAuthor.value}`.trim(),

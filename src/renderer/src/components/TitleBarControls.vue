@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
 import { useSettingsStore } from '@renderer/store/Settings'
 import { storeToRefs } from 'pinia'
+import { getPlatformService } from '@common/platform'
 
 const props = withDefaults(defineProps<Props>(), {
   controlStyle: false,
@@ -44,11 +45,11 @@ const controlsClass = computed(() => {
 
 // 窗口控制方法
 const handleMinimize = (): void => {
-  window.api?.minimize()
+  getPlatformService().minimize()
 }
 
 const handleMaximize = (): void => {
-  window.api?.maximize()
+  getPlatformService().maximize()
 }
 
 const handleClose = (): void => {
@@ -60,7 +61,7 @@ const handleClose = (): void => {
   if (settings.value.closeToTray) {
     handleMiniMode()
   } else {
-    window.api?.close()
+    getPlatformService().close()
   }
 }
 
@@ -78,19 +79,15 @@ const handleCloseChoice = (toTray: boolean): void => {
   if (toTray) {
     handleMiniMode()
   } else {
-    window.api?.close()
+    getPlatformService().close()
   }
 }
 
 const handleMiniMode = (): void => {
   // 直接最小化到系统托盘
   console.log('TitleBarControls: 点击了最小化到系统托盘按钮')
-  if (window.api) {
-    console.log('TitleBarControls: window.api 存在，调用 setMiniMode(true)')
-    window.api.setMiniMode(true)
-  } else {
-    console.error('TitleBarControls: window.api 不存在！')
-  }
+  console.log('TitleBarControls: 调用 setMiniMode(true)')
+  getPlatformService().setMiniMode(true)
   console.log('最小化到系统托盘')
 }
 
@@ -121,7 +118,7 @@ onMounted(() => {
   window.addEventListener('ceru-show-close-dialog', handler)
   unsubShowDialog = () => window.removeEventListener('ceru-show-close-dialog', handler)
 
-  unsubFullscreen = window.api?.onFullscreenChanged?.((value: boolean) => {
+  unsubFullscreen = getPlatformService().onFullscreenChanged((value: boolean) => {
     isAppFullscreen.value = value
   })
 })

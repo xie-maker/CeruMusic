@@ -6,7 +6,6 @@
  */
 
 import type {
-  HotkeyAction,
   HotkeyConfig,
   HotkeyConfigPayload,
   HotkeyStatus
@@ -52,6 +51,10 @@ export interface PlatformService {
       args: MusicSdkRequestOptions
     ) => Promise<any>
     invoke: (channel: string, ...args: any[]) => Promise<any>
+    /** 监听 IPC 事件（对应 ipcRenderer.on） */
+    on: (channel: string, callback: (...args: any[]) => void) => Unsubscribe
+    /** 移除指定通道的所有监听器（对应 ipcRenderer.removeAllListeners） */
+    removeAllListeners: (channel: string) => void
   }
 
   // === 音乐缓存 ===
@@ -202,7 +205,35 @@ export interface PlatformService {
     onScanFinished: (callback: (resList: any[]) => void) => void
     removeScanProgress: () => void
     removeScanFinished: () => void
+    getUrlById: (id: string) => Promise<string>
+    getDirs: () => Promise<string[]>
+    setDirs: (dirs: string[]) => Promise<void>
+    getList: () => Promise<any[]>
+    batchMatch: (ids: string[]) => Promise<any>
+    getCoverBase64: (songmid: string) => Promise<string>
+    onBatchMatchProgress: (callback: (processed: number, total: number) => void) => void
+    onBatchMatchFinished: (callback: (res: any) => void) => void
+    removeBatchMatchListeners: () => void
+    clearIndex: () => Promise<void>
     [key: string]: any
+  }
+
+  // === 文件操作 ===
+  file: {
+    readFile: (path: string) => Promise<Uint8Array>
+  }
+
+  // === Windows 任务栏缩略图工具栏（桌面端专属） ===
+  thumbar?: {
+    setState: (state: string) => void
+    setCover: (coverUrl: string) => void
+    onToggleLike: (callback: () => void) => Unsubscribe
+  }
+
+  // === 窗口标题/进度条（桌面端专属） ===
+  app?: {
+    setTitle: (title: string) => void
+    setProgress: (progress: number) => void
   }
 
   // === 分享 ===

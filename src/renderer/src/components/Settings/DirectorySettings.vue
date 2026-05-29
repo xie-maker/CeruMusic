@@ -77,6 +77,7 @@
 <script setup lang="ts">
 import { ref, onMounted, toRaw } from 'vue'
 import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
+import { getPlatformService } from '@common/platform'
 
 // 定义事件
 const emit = defineEmits<{
@@ -97,7 +98,7 @@ const isSaving = ref(false)
 // 加载目录配置
 const loadDirectories = async () => {
   try {
-    const dirs = await window.api.directorySettings.getDirectories()
+    const dirs = await getPlatformService().directorySettings.getDirectories()
     directories.value = dirs
 
     // 获取目录大小
@@ -111,7 +112,7 @@ const loadDirectories = async () => {
 // 更新缓存目录大小
 const updateCacheDirSize = async () => {
   try {
-    const sizeInfo = await window.api.directorySettings.getDirectorySize(directories.value.cacheDir)
+    const sizeInfo = await getPlatformService().directorySettings.getDirectorySize(directories.value.cacheDir)
     cacheDirSize.value = sizeInfo
   } catch (error) {
     console.error('获取缓存目录大小失败:', error)
@@ -121,7 +122,7 @@ const updateCacheDirSize = async () => {
 // 更新下载目录大小
 const updateDownloadDirSize = async () => {
   try {
-    const sizeInfo = await window.api.directorySettings.getDirectorySize(
+    const sizeInfo = await getPlatformService().directorySettings.getDirectorySize(
       directories.value.downloadDir
     )
     downloadDirSize.value = sizeInfo
@@ -133,7 +134,7 @@ const updateDownloadDirSize = async () => {
 // 选择缓存目录
 const selectCacheDir = async () => {
   try {
-    const result = await window.api.directorySettings.selectCacheDir()
+    const result = await getPlatformService().directorySettings.selectCacheDir()
 
     if (result.success && result.path) {
       directories.value.cacheDir = result.path
@@ -151,7 +152,7 @@ const selectCacheDir = async () => {
 // 选择下载目录
 const selectDownloadDir = async () => {
   try {
-    const result = await window.api.directorySettings.selectDownloadDir()
+    const result = await getPlatformService().directorySettings.selectDownloadDir()
 
     if (result.success && result.path) {
       directories.value.downloadDir = result.path
@@ -169,7 +170,7 @@ const selectDownloadDir = async () => {
 // 打开缓存目录
 const openCacheDir = async () => {
   try {
-    const result = await window.api.directorySettings.openDirectory(directories.value.cacheDir)
+    const result = await getPlatformService().directorySettings.openDirectory(directories.value.cacheDir)
 
     if (!result.success) {
       MessagePlugin.error(result.message || '打开目录失败')
@@ -183,7 +184,7 @@ const openCacheDir = async () => {
 // 打开下载目录
 const openDownloadDir = async () => {
   try {
-    const result = await window.api.directorySettings.openDirectory(directories.value.downloadDir)
+    const result = await getPlatformService().directorySettings.openDirectory(directories.value.downloadDir)
 
     if (!result.success) {
       MessagePlugin.error(result.message || '打开目录失败')
@@ -199,7 +200,7 @@ const saveDirectories = async () => {
   isSaving.value = true
 
   try {
-    const result = await window.api.directorySettings.saveDirectories(toRaw(directories.value))
+    const result = await getPlatformService().directorySettings.saveDirectories(toRaw(directories.value))
 
     if (result.success) {
       MessagePlugin.success('目录设置已保存')
@@ -224,7 +225,7 @@ const resetDirectories = async () => {
     cancelBtn: '取消',
     onConfirm: async () => {
       try {
-        const result = await window.api.directorySettings.resetDirectories()
+        const result = await getPlatformService().directorySettings.resetDirectories()
 
         if (result.success && result.directories) {
           directories.value = result.directories

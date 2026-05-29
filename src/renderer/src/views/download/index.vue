@@ -12,6 +12,7 @@ import {
 import { useSettingsStore } from '@renderer/store/Settings'
 import { storeToRefs } from 'pinia'
 import { formatMusicInfo } from '@common/utils/format'
+import { getPlatformService } from '@common/platform'
 
 const store = useDownloadStore()
 const maxConcurrent = ref(3)
@@ -21,7 +22,7 @@ const { settings } = storeToRefs(settingsStore)
 const filenameTemplate = ref(settings.value.filenameTemplate || '%t - %s')
 
 const updateConcurrent = (val: number) => {
-  window.api.download.setMaxConcurrent(val)
+  getPlatformService().download.setMaxConcurrent(val)
 }
 
 onMounted(async () => {
@@ -123,7 +124,7 @@ const formatSize = (size: number) => {
 // 立即安装（仅针对应用更新任务）
 const installUpdate = () => {
   try {
-    window.api.autoUpdater.quitAndInstall()
+    getPlatformService().autoUpdater.quitAndInstall()
   } catch (e) {
     console.error('安装更新失败', e)
   }

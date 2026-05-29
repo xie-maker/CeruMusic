@@ -2,6 +2,7 @@ import { toRaw } from 'vue'
 import { MessagePlugin } from 'tdesign-vue-next'
 import { type SongList } from '@renderer/types/audio'
 import { getSongRealUrl } from '@renderer/utils/playlist/playlistManager'
+import { getPlatformService } from '@common/platform'
 
 export const strSim = (s1: string, s2: string) => {
   const t1 = (s1 || '').toLowerCase().trim()
@@ -85,7 +86,7 @@ export const getCandidateSongs = async (
 
   const searchPromises = sources.map(async (source) => {
     try {
-      const res = await (window as any).api.music.requestSdk('search', {
+      const res = await getPlatformService().music.requestSdk('search', {
         source,
         keyword: searchKeyword,
         page: 1,

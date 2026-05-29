@@ -4,6 +4,7 @@ import Versions from '@renderer/components/Versions.vue'
 import { useAutoUpdate } from '@renderer/composables/useAutoUpdate'
 import { useSettingsStore } from '@renderer/store/Settings'
 import { storeToRefs } from 'pinia'
+import { getPlatformService } from '@common/platform'
 
 const settingsStore = useSettingsStore()
 const { settings } = storeToRefs(settingsStore)
@@ -21,7 +22,7 @@ const { checkForUpdates } = useAutoUpdate()
 
 const getAppVersion = async () => {
   try {
-    const version = await window.electron.ipcRenderer.invoke('get-app-version')
+    const version = await getPlatformService().music.invoke('get-app-version')
     if (version) {
       appVersion.value = version
     }

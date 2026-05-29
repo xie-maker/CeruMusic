@@ -16,6 +16,7 @@ import { useAudioOutputStore } from '@renderer/store/audioOutput'
 import { storeToRefs } from 'pinia'
 import AudioManager from '@renderer/utils/audio/audioManager'
 import { crossfadeState } from '@renderer/utils/audio/crossfade'
+import { getPlatformService } from '@common/platform'
 
 type AudioSlot = 'A' | 'B'
 
@@ -339,7 +340,7 @@ const handleCanPlay = (slot: AudioSlot): void => {
 
 onUnmounted(() => {
   try {
-    window.api.pingService.stop()
+    getPlatformService().pingService.stop()
   } catch {}
   if (rafId !== null) {
     try {

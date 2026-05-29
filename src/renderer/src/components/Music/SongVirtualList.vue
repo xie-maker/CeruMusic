@@ -342,6 +342,7 @@ import { useAuthStore } from '@renderer/store'
 import { useSettingsStore } from '@renderer/store/Settings'
 import ShareSongDialog from '@renderer/components/Share/ShareSongDialog.vue'
 import songCover from '@assets/images/song.jpg'
+import { getPlatformService } from '@common/platform'
 
 const settingsStore = useSettingsStore()
 
@@ -1128,7 +1129,7 @@ const contrastTextColor = 'var(--song-list-btn-color)'
 
 const loadFavorites = async () => {
   try {
-    const favIdRes = await (window as any).api?.songList?.getFavoritesId?.()
+    const favIdRes = await getPlatformService().songList.getFavoritesId()
     const id: string | null = (favIdRes && favIdRes.data) || null
     favoritesId.value = id
     if (!id) {
@@ -1168,7 +1169,7 @@ const ensureFavoritesId = async (): Promise<string | null> => {
     const exact = searchRes.data.find((pl) => pl.name === '我的喜欢' && pl.source === 'local')
     if (exact?.id) {
       favoritesId.value = exact.id
-      await (window as any).api?.songList?.setFavoritesId?.(favoritesId.value)
+      await getPlatformService().songList.setFavoritesId(favoritesId.value)
       return favoritesId.value
     }
   }
@@ -1178,7 +1179,7 @@ const ensureFavoritesId = async (): Promise<string | null> => {
     return null
   }
   favoritesId.value = createRes.data.id
-  await (window as any).api?.songList?.setFavoritesId?.(favoritesId.value)
+  await getPlatformService().songList.setFavoritesId(favoritesId.value)
   return favoritesId.value
 }
 

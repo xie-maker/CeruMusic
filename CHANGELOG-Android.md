@@ -37,13 +37,103 @@
 
 ---
 
+## 2026-05-29 — 阶段 1：渲染进程迁移
+
+### 完成内容
+
+#### 1. 渲染进程文件迁移（40+ 个文件）
+- 将所有 `window.api.*` / `window.electron.*` 调用迁移到 `getPlatformService().*`
+- 迁移范围：store（4）、api（1）、utils（5）、views（14）、components（22）、services（3）
+- 仅 DeskTopLyric.vue（桌面专属悬浮歌词）保留 window.electron
+
+#### 2. PlatformService 接口补充
+- 添加 `music.on` / `music.removeAllListeners`（IPC 事件监听）
+- 添加 `localMusic` 缺失方法：`getUrlById`, `getDirs`, `setDirs`, `getList`, `batchMatch`, `getCoverBase64`, `onBatchMatchProgress`, `onBatchMatchFinished`, `removeBatchMatchListeners`, `clearIndex`
+- 添加 `file.readFile`、`thumbar`、`app` 命名空间
+
+#### 3. 问题修复
+- 修复 Provider.vue 事件监听语义错误（`music.invoke('on', ...)` → `music.on(...)`）
+- 修复 `music.request` 方法不存在（→ `music.requestSdk`）
+- 修复 App.vue / Provider.vue 残留 window.api 引用
+
+### 技术决策
+- IPC 事件监听使用 `music.on(channel, callback)` 模式，返回取消订阅函数
+- `thumbar` 和 `app` 设为可选属性（`?`），桌面端专属功能
+
+---
+
+## 2026-05-29 — 阶段 2：Capacitor 引导
+
+### 完成内容
+
+#### 1. Capacitor 依赖安装
+- 安装 `@capacitor/core`、`@capacitor/cli`、`@capacitor/android` 8.3.4
+- 使用 `--ignore-scripts` 绕过 phantomjs 安装问题
+
+#### 2. Capacitor 配置
+- 创建 `capacitor.config.ts`
+- appId: `com.cerumusic.app`
+- appName: `澜音`
+- webDir: `out/renderer`
+- 启用 CapacitorHttp（绕过 CORS）
+- 配置 androidScheme: `https`
+
+#### 3. Android 项目初始化
+- 运行 `npx cap add android` 成功
+- 生成 `android/` 目录，包含完整 Android 项目结构
+- Web 资源已同步到 `android/app/src/main/assets/public/`
+
+#### 4. 构建脚本
+- 添加 `build:android` — 构建 Web + 同步到 Android
+- 添加 `build:web` — 仅构建 Web（跳过类型检查）
+- 添加 `cap:sync` — 同步 Web 资源
+- 添加 `cap:open` — 打开 Android Studio
+
+### 技术决策
+- 启用 CapacitorHttp 内置 CORS 绕过，音乐 SDK HTTP 请求可在 WebView 中直接运行
+- 使用 `https` scheme 确保与 Web API 兼容
+
+---
+
+## 2026-05-29 — 阶段 3：高优先级功能（部分完成）
+
+### 完成内容
+
+#### 1. 音乐 SDK 浏览器化
+- **browserRequest.ts** — 浏览器版 HTTP 层，使用 fetch() 替代 axios，支持 CapacitorHttp 原生桥接
+- **browserCrypto.ts** — 浏览器版加密工具，使用 crypto-js 替代 Node.js crypto
+- **cryptoShim.ts** — Node.js crypto 兼容层，提供 createHash/createCipheriv/createDecipheriv 等 API
+- **音乐源模块** — 复制 wy/tx/kg/kw/mg/bd/git 到渲染进程，修改 import 路径
+- **browser.ts** — 浏览器版 SDK 入口，聚合搜索 + 跨源匹配
+
+#### 2. SQLite 歌单数据库
+- 安装 `@capacitor-community/sqlite` + `jeep-sqlite`
+- **CapacitorSongListService.ts** — 完整歌单 CRUD 实现
+  - playlists 表 + playlist_songs 表
+  - 支持创建/删除/编辑/搜索歌单
+  - 支持添加/移除/排序歌曲
+- **CapacitorPlatform.songList** — 已接入 SQLite 服务
+
+#### 3. CapacitorPlatform.music.requestSdk 实现
+- 动态导入浏览器版 SDK
+- 支持所有音乐源的 search/tipSearch/getMusicUrl/getLyric 等方法
+
+### 待实现（需要原生 Android 开发）
+- 本地音乐扫描 — 需要 CeruMediaStorePlugin（Android MediaStore API）
+- 下载管理器 — 需要 CeruDownloadPlugin（Android DownloadManager）
+
+### 技术决策
+- 音乐 SDK 使用动态 import() 延迟加载，减少初始包大小
+- SQLite 使用 localStorage 存储 favoritesHashId（简单键值对）
+- 加密模块使用 crypto-js 库（兼容性好）
+
+---
+
 ## 后续计划
 
 | 阶段 | 内容 | 预计工期 |
 |------|------|----------|
-| 阶段 1 | 渲染进程迁移到 PlatformService（46 个文件） | 3-5 天 |
-| 阶段 2 | Capacitor 引导（安装 + 配置 + 安卓项目） | 1-2 天 |
-| 阶段 3 | 高优先级功能（音乐SDK/SQLite/本地音乐/下载） | 5-7 天 |
+| 阶段 3 剩余 | 本地音乐扫描 + 下载管理器（原生插件） | 2-3 天 |
 | 阶段 4 | 中优先级功能（插件系统/媒体通知/AI） | 3-5 天 |
 | 阶段 5 | UI 适配（响应式/底部导航/触摸手势） | 2-3 天 |
 | 阶段 6 | 测试与发布 | 2-3 天 |

@@ -4,6 +4,7 @@ import { useMessage, useDialog } from 'naive-ui'
 import { SearchIcon } from 'tdesign-icons-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 import { convertLrcFormat, convertToStandardLrc } from '@renderer/utils/lrcParser'
+import { getPlatformService } from '@common/platform'
 
 const route = useRoute()
 const router = useRouter()
@@ -46,7 +47,7 @@ onActivated(async () => {
   songMid.value = mid
 
   try {
-    const api = (window as any).api
+    const api = getPlatformService()
     // Get basic info including path from list (or fetch by id if needed)
     // Here we assume we can fetch by id or need to pass path.
     // Ideally we fetch full info by ID
@@ -132,7 +133,7 @@ const handleSave = async () => {
   if (!songPath.value) return
   saving.value = true
   try {
-    const api = (window as any).api
+    const api = getPlatformService()
     const res = await api.localMusic.writeTags(
       songPath.value,
       {
@@ -200,7 +201,7 @@ const handleSearch = async () => {
     const all: any[] = []
     const searchPromises = sources.map(async (src) => {
       try {
-        const res = await (window as any).api.music.requestSdk('search', {
+        const res = await getPlatformService().music.requestSdk('search', {
           source: src,
           keyword: kw,
           page: 1,
@@ -216,7 +217,7 @@ const handleSearch = async () => {
             if (!item?.img) {
               itemsWithIndex.push({ item, index })
               tasks.push(
-                (window as any).api.music.requestSdk('getPic', {
+                getPlatformService().music.requestSdk('getPic', {
                   source: src,
                   songInfo: item
                 })
@@ -270,7 +271,7 @@ const applyResult = async (item: any) => {
       }
     } else {
       try {
-        const pic = await (window as any).api.music.requestSdk('getPic', {
+        const pic = await getPlatformService().music.requestSdk('getPic', {
           source: item.source,
           songInfo: item
         })
@@ -282,7 +283,7 @@ const applyResult = async (item: any) => {
     }
 
     try {
-      const lyricRes = await (window as any).api.music.requestSdk('getLyric', {
+      const lyricRes = await getPlatformService().music.requestSdk('getLyric', {
         source: item.source,
         songInfo: toRaw(item)
       })

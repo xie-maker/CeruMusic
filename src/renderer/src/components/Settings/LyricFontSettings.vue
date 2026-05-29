@@ -47,6 +47,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useSettingsStore } from '@renderer/store/Settings'
 import { storeToRefs } from 'pinia'
 import { MessagePlugin } from 'tdesign-vue-next'
+import { getPlatformService } from '@common/platform'
 
 const settingsStore = useSettingsStore()
 const { settings } = storeToRefs(settingsStore)
@@ -107,12 +108,12 @@ const handleFontChange = () => {
   const font = settings.value.lyricFontFamily
 
   // Send IPC to main process, which forwards to lyric window or updates config
-  window.electron.ipcRenderer.send('set-desktop-lyric-font', font)
+  getPlatformService().music.invoke('set-desktop-lyric-font', font)
 }
 
 onMounted(async () => {
   try {
-    const fonts = await window.electron.ipcRenderer.invoke('get-font-list')
+    const fonts = await getPlatformService().music.invoke('get-font-list')
     fontList.value = fonts
   } catch (e) {
     console.error('Failed to get font list', e)

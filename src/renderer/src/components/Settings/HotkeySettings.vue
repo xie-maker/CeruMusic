@@ -8,6 +8,7 @@ import {
   createHotkeyRecorder,
   isCompleteAccelerator
 } from '@renderer/utils/hotkeys/recording'
+import { getPlatformService } from '@common/platform'
 
 const hotkeyActions: Array<{ id: HotkeyAction; title: string; desc: string }> = [
   { id: 'toggle', title: '播放/暂停', desc: '全局切换播放状态' },
@@ -58,7 +59,7 @@ const updateStatus = (status?: HotkeyStatus) => {
 const load = async () => {
   loading.value = true
   try {
-    const res = await window.api.hotkeys.get()
+    const res = await getPlatformService().hotkeys.get()
     const cfg = (res && res.data) as HotkeyConfig | undefined
     if (!cfg) return
     enabled.value = !!cfg.enabled
@@ -74,7 +75,7 @@ const save = async () => {
   saving.value = true
   try {
     const plainBindings = { ...(toRaw(bindings.value) || {}) }
-    const res = await window.api.hotkeys.set({
+    const res = await getPlatformService().hotkeys.set({
       enabled: enabled.value,
       bindings: plainBindings
     })

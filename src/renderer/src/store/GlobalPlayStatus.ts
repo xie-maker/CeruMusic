@@ -8,6 +8,7 @@ import { reactive, computed, watch, toRaw, type ComputedRef } from 'vue'
 import _ from 'lodash'
 import defaultCover from '@renderer/assets/images/song.jpg'
 import { playSetting } from './playSetting'
+import { getPlatformService } from '@common/platform'
 
 interface Player {
   songId?: string
@@ -232,11 +233,10 @@ export const useGlobalPlayStatusStore = defineStore(
           !newImg &&
           info?.source === 'local' &&
           info?.hasCover &&
-          info?.songmid &&
-          (window as any)?.api?.localMusic?.getCoverBase64
+          info?.songmid
         ) {
           const targetId = String(info.songmid)
-          ;(window as any).api.localMusic
+          getPlatformService().localMusic
             .getCoverBase64(targetId)
             .then((data: string) => {
               if (
@@ -404,7 +404,7 @@ export const useGlobalPlayStatusStore = defineStore(
           if (source === 'wy' || source === 'tx') {
             const sdkPromise = (async () => {
               try {
-                const lyricData = await window.api.music.requestSdk('getLyric', {
+                const lyricData = await getPlatformService().music.requestSdk('getLyric', {
                   source,
                   songInfo: getCleanSongInfo(),
                   grepLyricInfo: playSettingStore.getIsGrepLyricInfo,
@@ -488,7 +488,7 @@ export const useGlobalPlayStatusStore = defineStore(
             if (servicePluginId) {
               // 通过服务插件异步获取歌词（类似 wy/kg）
               try {
-                const lyricResult = await window.api.plugins.getServiceLyric(
+                const lyricResult = await getPlatformService().plugins.getServiceLyric(
                   servicePluginId,
                   getCleanSongInfo()
                 )
@@ -513,7 +513,7 @@ export const useGlobalPlayStatusStore = defineStore(
             } else {
               // 没有自带歌词也没有服务插件ID，尝试通过音源SDK获取
               try {
-                const lyricData = await window.api.music.requestSdk('getLyric', {
+                const lyricData = await getPlatformService().music.requestSdk('getLyric', {
                   source,
                   songInfo: getCleanSongInfo(),
                   grepLyricInfo: playSettingStore.getIsGrepLyricInfo,
@@ -538,7 +538,7 @@ export const useGlobalPlayStatusStore = defineStore(
           } else {
             let text = (player.songInfo as any).lrc as string | null
             if (!text) {
-              text = await window.api.music.invoke(
+              text = await getPlatformService().music.invoke(
                 'local-music:get-lyric',
                 (player.songInfo as any).songmid
               )
@@ -582,7 +582,7 @@ export const useGlobalPlayStatusStore = defineStore(
       }
       try {
         const method = type === 'hot' ? 'getHotComment' : 'getComment'
-        const res = await window.api.music.requestSdk(method, {
+        const res = await getPlatformService().music.requestSdk(method, {
           source: currentSongInfo.source || 'wy',
           songInfo: currentSongInfo,
           page,

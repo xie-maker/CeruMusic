@@ -63,6 +63,7 @@ import { useSearchStore } from '@renderer/store'
 import { watchDebounced } from '@vueuse/core'
 import { ref, nextTick } from 'vue'
 import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
+import { getPlatformService } from '@common/platform'
 
 const emit = defineEmits<{
   toSearch: [key: number | string, type: string]
@@ -111,7 +112,7 @@ const getSearchSuggest = async (keywords: string) => {
   try {
     console.log('获取搜索建议', keywords)
     // 使用网易云音乐的搜索建议API
-    const result = await window.api.music.requestSdk('tipSearch', {
+    const result = await getPlatformService().music.requestSdk('tipSearch', {
       source: toRaw(LocalUserDetailStore().userSource.source || 'wy'),
       keyword: keywords
     })

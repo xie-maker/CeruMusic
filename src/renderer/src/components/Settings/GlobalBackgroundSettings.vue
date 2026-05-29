@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSettingsStore } from '@renderer/store/Settings'
+import { getPlatformService } from '@common/platform'
 
 const settingsStore = useSettingsStore()
 const { settings } = storeToRefs(settingsStore)
@@ -31,7 +32,7 @@ const updateMultipleBg = (updates: Partial<typeof bgSettings.value>) => {
 
 const handleFileSelect = async () => {
   try {
-    const filePaths = await window.electron.ipcRenderer.invoke('dialog:openFile', {
+    const filePaths = await getPlatformService().music.invoke('dialog:openFile', {
       properties: ['openFile'],
       filters: [
         {

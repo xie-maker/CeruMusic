@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { MessagePlugin } from 'tdesign-vue-next'
 import songCover from '@assets/images/song.jpg'
 import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
+import { getPlatformService } from '@common/platform'
 
 interface AlbumItem {
   id?: string | number
@@ -42,7 +43,7 @@ const fetchAlbums = async (reset = false) => {
 
   loading.value = true
   try {
-    const res = await window.api.music.requestSdk('getArtistAlbums', {
+    const res = await getPlatformService().music.requestSdk('getArtistAlbums', {
       source: artistSource.value,
       id: artistId.value,
       keyword: artistName.value,

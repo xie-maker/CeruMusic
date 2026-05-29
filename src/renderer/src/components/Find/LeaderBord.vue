@@ -31,6 +31,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
 import LeaderBordCard from '../Card/LeaderBordCard.vue'
+import { getPlatformService } from '@common/platform'
 
 const boards = ref<any[]>([])
 const loading = ref(true)
@@ -48,7 +49,7 @@ const fetchBoards = async () => {
       return
     }
     // Using window.api.music.requestSdk which maps to main process service
-    const res = await (window as any).api.music.requestSdk('getLeaderboards', { source })
+    const res = await getPlatformService().music.requestSdk('getLeaderboards', { source })
 
     console.log('Leaderboards fetched:', res)
     boards.value = res || []

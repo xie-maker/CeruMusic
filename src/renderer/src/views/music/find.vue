@@ -7,6 +7,7 @@ import LeaderBord from '@renderer/components/Find/LeaderBord.vue'
 import { ChevronDownIcon, PlayCircleIcon } from 'tdesign-icons-vue-next'
 import { useSettingsStore } from '@renderer/store/Settings'
 import { tryShowListenTogetherInvite } from '@renderer/services/listenTogetherInvite'
+import { getPlatformService } from '@common/platform'
 
 interface Playlist {
   id: string
@@ -84,7 +85,7 @@ const mapItem = (item: any): Playlist => ({
 
 const fetchTags = async (): Promise<void> => {
   try {
-    const res = await window.api.music.requestSdk('getPlaylistTags', {
+    const res = await getPlatformService().music.requestSdk('getPlaylistTags', {
       source: userSource.value.source || 'wy'
     })
     tags.value = res?.tags || []
@@ -116,7 +117,7 @@ const fetchCategoryPlaylists = async (reset = false): Promise<void> => {
   }
   loadingMore.value = true
   try {
-    const res = await window.api.music.requestSdk('getCategoryPlaylists', {
+    const res = await getPlatformService().music.requestSdk('getCategoryPlaylists', {
       source: userSource.value.source || 'wy',
       sortId: 'hot',
       tagId: activeTagId.value,
