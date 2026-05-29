@@ -129,12 +129,45 @@
 
 ---
 
+## 2026-05-29 — 阶段 4：中优先级功能
+
+### 完成内容
+
+#### 1. 插件系统浏览器化
+- **BrowserPluginService.ts** — Web Worker 沙箱
+  - 从 URL 或代码加载插件
+  - 提供 cerumusic API（buffer、crypto、request）
+  - 支持调用插件方法（search、getMusicUrl 等）
+- **CapacitorPlatform.plugins** — 已接入浏览器插件服务
+
+#### 2. 媒体通知集成
+- **CapacitorMediaSessionService.ts** — 媒体会话管理
+  - setMetadata / setPlaybackState / setPosition
+  - 监听 play/pause/next/prev/stop/seekto 事件
+- 安装 `@capgo/capacitor-media-session`
+
+#### 3. 其他功能
+- 剪贴板 — `@capacitor/clipboard`
+- App 生命周期 — `@capacitor/app`
+- 原生分享 — `@capacitor/share`
+
+### Code Review 修复
+- thumbar/app 改为 getter 延迟求值
+- StubPlatform.music.on 返回 noop 而非抛异常
+- pluginNotice 正确处理取消订阅（修复内存泄漏）
+- music.requestSdk 添加 args 空值保护
+
+### 技术决策
+- 插件使用 Web Worker 沙箱（替代 Node.js worker_threads）
+- 媒体通知使用 @capgo/capacitor-media-session（社区维护，功能完整）
+
+---
+
 ## 后续计划
 
 | 阶段 | 内容 | 预计工期 |
 |------|------|----------|
 | 阶段 3 剩余 | 本地音乐扫描 + 下载管理器（原生插件） | 2-3 天 |
-| 阶段 4 | 中优先级功能（插件系统/媒体通知/AI） | 3-5 天 |
 | 阶段 5 | UI 适配（响应式/底部导航/触摸手势） | 2-3 天 |
 | 阶段 6 | 测试与发布 | 2-3 天 |
 
