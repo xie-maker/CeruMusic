@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import TitleBarControls from '@renderer/components/TitleBarControls.vue'
 import SearchSuggest from '@renderer/components/search/searchSuggest.vue'
+import MobileLayout from '@renderer/components/MobileNav/MobileLayout.vue'
 import { SearchIcon, MicrophoneIcon, MenuFoldIcon, MenuUnfoldIcon } from 'tdesign-icons-vue-next'
 import { onMounted, onUnmounted, ref, watchEffect, computed, watch } from 'vue'
 import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
 import { useRouter, useRoute } from 'vue-router'
 import { useSearchStore } from '@renderer/store'
 import { GuideStep } from 'tdesign-vue-next'
+import { useIsMobile } from '@renderer/composables/useIsMobile'
+
+const { isMobile } = useIsMobile()
 
 let stopWatchEffect: (() => void) | null = null
 
@@ -336,7 +340,13 @@ function checkGuide() {
 </script>
 
 <template>
-  <t-layout class="home-container">
+  <!-- 移动端布局 -->
+  <MobileLayout v-if="isMobile">
+    <slot name="body"></slot>
+  </MobileLayout>
+
+  <!-- 桌面端布局 -->
+  <t-layout v-else class="home-container">
     <!-- sidebar -->
     <t-aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
       <div class="sidebar-content">

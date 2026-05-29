@@ -5,6 +5,9 @@ import { LocalUserDetailStore } from '@renderer/store/LocalUserDetail'
 import { useSettingsStore } from '@renderer/store/Settings'
 import { storeToRefs } from 'pinia'
 import { getPlatformService } from '@common/platform'
+import { useIsMobile } from '@renderer/composables/useIsMobile'
+
+const { isMobile } = useIsMobile()
 
 const props = withDefaults(defineProps<Props>(), {
   controlStyle: false,
@@ -132,7 +135,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-show="!isAppFullscreen" :class="controlsClass">
+  <div v-if="!isMobile" v-show="!isAppFullscreen" :class="controlsClass">
     <div class="left">
       <div class="back-box">
         <t-button
